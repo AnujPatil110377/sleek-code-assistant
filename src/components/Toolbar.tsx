@@ -1,23 +1,17 @@
 import { Button } from "@/components/ui/button"
-import { Upload, Play, Wrench, RotateCcw } from "lucide-react"
-
-interface ToolbarProps {
-  onAssemble: () => void;
-  onExecute: () => void;
-  onReset: () => void;
-  onStep: () => void;
-  onCodeChange: (code: string) => void;
-  isAssembled: boolean;
-}
+import { Upload } from "lucide-react"
 
 const Toolbar = ({ 
   onAssemble, 
-  onExecute,
   onReset, 
-  onStep, 
-  onCodeChange,
-  isAssembled 
-}: ToolbarProps) => {
+  onStep,
+  onCodeChange 
+}: { 
+  onAssemble: () => void;
+  onReset: () => void;
+  onStep: () => void;
+  onCodeChange: (code: string) => void;
+}) => {
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
@@ -40,7 +34,7 @@ const Toolbar = ({
             type="file"
             id="file-upload"
             className="hidden"
-            accept=".txt,.asm"
+            accept=".txt"
             onChange={handleFileUpload}
           />
           <Button 
@@ -49,38 +43,31 @@ const Toolbar = ({
             onClick={() => document.getElementById('file-upload')?.click()}
           >
             <Upload size={16} />
-            Upload
+            Upload File
           </Button>
         </div>
         <div className="h-4 w-px bg-gray-700" />
         <Button 
           variant="secondary" 
-          className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
-          onClick={onAssemble}
+          className="bg-blue-600 hover:bg-blue-700 text-white"
+          onClick={() => {
+            console.log('Run button clicked');
+            onAssemble();
+          }}
         >
-          <Wrench size={16} />
-          Assemble
+          Run
         </Button>
         <Button 
           variant="secondary" 
-          className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
-          onClick={onExecute}
-          disabled={!isAssembled}
-        >
-          <Play size={16} />
-          Execute
-        </Button>
-        <Button 
-          variant="secondary" 
-          className="bg-gray-700 hover:bg-gray-600 text-white flex items-center gap-2"
+          className="bg-gray-700 hover:bg-gray-600 text-white"
           onClick={onReset}
         >
-          <RotateCcw size={16} />
           Reset
         </Button>
       </div>
+      <div className="flex items-center space-x-2" />
     </div>
-  );
-};
+  )
+}
 
-export default Toolbar;
+export default Toolbar

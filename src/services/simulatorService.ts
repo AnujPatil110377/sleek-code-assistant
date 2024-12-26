@@ -11,6 +11,7 @@ class SimulatorService {
   private simulator: MIPSSimulator | null = null;
   private consoleOutput: string[] = [];
 
+  // Intercept console.log for output capture
   private setupConsoleCapture() {
     const originalLog = console.log;
     console.log = (...args) => {
@@ -19,47 +20,28 @@ class SimulatorService {
     };
   }
 
-  public assemble(code: string): void {
-    console.log('Assembling code:', code);
+  public assembleAndRun(code: string): SimulationResult {
+    console.log('SimulatorService: Starting assembly and run');
     this.consoleOutput = [];
-    
-    try {
-      const cleanInstructions = readAsmFile(code);
-      const [instructions, labels, memory] = parseLabelsAndInstructions(cleanInstructions);
-      
-      this.simulator = new MIPSSimulator(instructions, labels, memory, false);
-      console.log('Code assembled successfully');
-    } catch (error) {
-      console.error('Assembly error:', error);
-      throw error;
-    }
-  }
+    this.setupConsoleCapture();
 
-  public execute(): SimulationResult {
-    if (!this.simulator) {
-      throw new Error('No code assembled. Please assemble code first.');
-    }
+    // Parse the code
+    const cleanInstructions = readAsmFile(code);
+    console.log('Cleaned instructions:', cleanInstructions);
 
-    try {
-      this.setupConsoleCapture();
-      this.simulator.run();
+    const [instructions, labels, memory] = parseLabelsAndInstructions(cleanInstructions);
+    console.log('Parsed result:', { instructions, labels, memory });
 
-      const result = {
-        registers: this.simulator.getRegisters(),
-        memory: this.simulator.getMemory(),
-        output: this.consoleOutput
-      };
+    // Create and run simulator
+    this.simulator = new MIPSSimulator(instructions, labels, memory, false);
+    this.simulator.run();
 
-      console.log('Execution completed:', result);
-      return result;
-    } catch (error) {
-      console.error('Execution error:', error);
-      throw error;
-    }
-  }
-
-  public isAssembled(): boolean {
-    return this.simulator !== null;
+    // Get final state
+    return {
+      registers: this.simulator.getRegisters(),
+      memory: this.simulator.getMemory(),
+      output: this.consoleOutput
+    };
   }
 
   public reset(): void {

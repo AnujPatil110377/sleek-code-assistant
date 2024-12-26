@@ -10,7 +10,7 @@ const MemoryViewer = () => {
 
   return (
     <div className="h-[40vh] p-4">
-      <div className="bg-gray-800 rounded-lg p-2 h-full">
+      <div className="bg-gray-800 rounded-lg p-2 h-full w-[800px]">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm font-semibold">Memory</h2>
           <div className="flex space-x-2">
@@ -22,9 +22,9 @@ const MemoryViewer = () => {
           <table className="w-full text-xs font-mono whitespace-nowrap">
             <thead>
               <tr className="bg-gray-700">
-                <th className="text-left p-1 sticky left-0 bg-gray-700">Addr</th>
-                <th className="text-left p-1 min-w-[400px]">Data</th>
-                <th className="text-left p-1">Ascii</th>
+                <th className="text-left p-1 sticky left-0 bg-gray-700 w-[100px]">Addr</th>
+                <th className="text-left p-1 w-[500px]">Data</th>
+                <th className="text-left p-1 w-[200px]">Ascii</th>
               </tr>
             </thead>
             <tbody>

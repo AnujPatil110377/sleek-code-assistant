@@ -27,7 +27,7 @@ const Toolbar = ({
   }
 
   return (
-    <div className="bg-[#1e1e1e] border-b border-gray-700 p-2 flex items-center justify-between">
+    <div className="bg-gray-800 border-b border-gray-700 p-2 flex items-center justify-between">
       <div className="flex items-center space-x-2">
         <div className="relative">
           <input
@@ -39,7 +39,7 @@ const Toolbar = ({
           />
           <Button 
             variant="ghost" 
-            className="text-gray-300 hover:text-white hover:bg-[#2d2d2d] flex items-center gap-2"
+            className="text-gray-300 hover:text-blue-400 hover:bg-gray-700 flex items-center gap-2"
             onClick={() => document.getElementById('file-upload')?.click()}
           >
             <Upload size={16} />
@@ -49,7 +49,7 @@ const Toolbar = ({
         <div className="h-4 w-px bg-gray-700" />
         <Button 
           variant="secondary" 
-          className="bg-[#3e8e41] hover:bg-[#4caf50] text-white"
+          className="bg-blue-600 hover:bg-blue-700 text-white"
           onClick={onAssemble}
         >
           Run

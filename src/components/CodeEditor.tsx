@@ -8,9 +8,10 @@ interface CodeEditorProps {
 
 const CodeEditor = ({ code, onChange }: CodeEditorProps) => {
   const editorRef = useRef<any>(null);
-  const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  const resizeTimeoutRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
+<<<<<<< HEAD
     let resizeTimeout: NodeJS.Timeout;
     
     resizeObserverRef.current = new ResizeObserver((entries) => {
@@ -21,25 +22,51 @@ const CodeEditor = ({ code, onChange }: CodeEditorProps) => {
             editorRef.current.layout();
           }
         });
+=======
+    const handleResize = () => {
+      // Clear any existing timeout
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current);
+      }
+
+      // Debounce the layout update
+      resizeTimeoutRef.current = setTimeout(() => {
+        if (editorRef.current?.layout) {
+          console.log('Updating editor layout');
+          editorRef.current.layout();
+        }
+>>>>>>> 756bc19a0ad1595816cd09fa188b495198de2898
       }, 100);
+    };
+
+    // Create ResizeObserver with debounced handler
+    const resizeObserver = new ResizeObserver(() => {
+      handleResize();
     });
 
+<<<<<<< HEAD
+=======
+    // Observe the editor container
+>>>>>>> 756bc19a0ad1595816cd09fa188b495198de2898
     const editorContainer = document.querySelector('.editor-container');
     if (editorContainer) {
-      resizeObserverRef.current.observe(editorContainer);
+      resizeObserver.observe(editorContainer);
+      console.log('Started observing editor container');
     }
 
     return () => {
-      if (resizeObserverRef.current) {
-        resizeObserverRef.current.disconnect();
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current);
       }
-      clearTimeout(resizeTimeout);
+      resizeObserver.disconnect();
+      console.log('Cleaned up resize observer');
     };
   }, []);
 
   const handleEditorDidMount = (editor: any) => {
     editorRef.current = editor;
     editor.layout();
+    console.log('Editor mounted successfully');
   };
 
   return (

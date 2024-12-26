@@ -1,22 +1,13 @@
 import { Button } from "@/components/ui/button"
-import { Upload } from "lucide-react"
-import { Tool, Play } from "lucide-react"
+import { Upload, Play, RotateCcw } from "lucide-react"
 
-const Toolbar = ({ 
-  onAssemble, 
-  onExecute,
-  onReset, 
-  onStep, 
-  onCodeChange,
-  isAssembled 
-}: { 
-  onAssemble: () => void;
+interface ToolbarProps {
   onExecute: () => void;
   onReset: () => void;
-  onStep: () => void;
   onCodeChange: (code: string) => void;
-  isAssembled: boolean;
-}) => {
+}
+
+const Toolbar = ({ onExecute, onReset, onCodeChange }: ToolbarProps) => {
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
@@ -31,65 +22,45 @@ const Toolbar = ({
     }
   }
 
-  const handleAssembleClick = () => {
-    console.log('Assemble button clicked');
-    onAssemble();
-  };
-
-  const handleExecuteClick = () => {
-    console.log('Execute button clicked');
-    onExecute();
-  };
-
   return (
-    <div className="bg-gray-800 border-b border-gray-700 p-2 flex items-center justify-between">
-      <div className="flex items-center space-x-2">
-        <div className="relative">
-          <input
-            type="file"
-            id="file-upload"
-            className="hidden"
-            accept=".txt"
-            onChange={handleFileUpload}
-          />
-          <Button 
-            variant="ghost" 
-            className="text-gray-300 hover:text-blue-400 hover:bg-gray-700 flex items-center gap-2"
-            onClick={() => document.getElementById('file-upload')?.click()}
-          >
-            <Upload size={16} />
-            Upload File
-          </Button>
-        </div>
-        <div className="h-4 w-px bg-gray-700" />
+    <div className="bg-gray-800 border-b border-gray-700 p-2 flex items-center space-x-2">
+      <div className="relative">
+        <input
+          type="file"
+          id="file-upload"
+          className="hidden"
+          accept=".txt,.asm"
+          onChange={handleFileUpload}
+        />
         <Button 
-          variant="secondary" 
-          className="bg-green-600 hover:bg-green-700 text-white"
-          onClick={handleAssembleClick}
+          variant="ghost" 
+          className="text-gray-300 hover:text-blue-400 hover:bg-gray-700"
+          onClick={() => document.getElementById('file-upload')?.click()}
         >
-          <Tool className="w-4 h-4 mr-2" />
-          Assemble
-        </Button>
-        <Button 
-          variant="secondary" 
-          className={`bg-blue-600 hover:bg-blue-700 text-white ${!isAssembled && 'opacity-50'}`}
-          onClick={handleExecuteClick}
-          disabled={!isAssembled}
-        >
-          <Play className="w-4 h-4 mr-2" />
-          Execute
-        </Button>
-        <Button 
-          variant="secondary" 
-          className="bg-gray-700 hover:bg-gray-600 text-white"
-          onClick={onReset}
-        >
-          Reset
+          <Upload className="w-4 h-4 mr-2" />
+          Upload
         </Button>
       </div>
-      <div className="flex items-center space-x-2" />
-    </div>
-  )
-}
 
-export default Toolbar
+      <Button 
+        variant="secondary" 
+        className="bg-blue-600 hover:bg-blue-700 text-white"
+        onClick={onExecute}
+      >
+        <Play className="w-4 h-4 mr-2" />
+        Run
+      </Button>
+
+      <Button 
+        variant="secondary" 
+        className="bg-gray-700 hover:bg-gray-600 text-white"
+        onClick={onReset}
+      >
+        <RotateCcw className="w-4 h-4 mr-2" />
+        Reset
+      </Button>
+    </div>
+  );
+};
+
+export default Toolbar;

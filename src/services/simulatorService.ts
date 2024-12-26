@@ -8,87 +8,55 @@ interface SimulationResult {
 }
 
 class SimulatorService {
-  constructor() {
-    console.log('SimulatorService instance created');
-  }
-
   private simulator: MIPSSimulator | null = null;
   private consoleOutput: string[] = [];
 
-  private setupConsoleCapture() {
-    const originalLog = console.log;
-    console.log = (...args) => {
-      this.consoleOutput.push(args.join(' '));
-      originalLog.apply(console, args);
-    };
-  }
-
   public executeCode(code: string): SimulationResult {
-    console.log('=== SIMULATOR EXECUTION START ===');
-    
-    // 1. Validate input
-    if (!code) {
-      console.error('No code provided');
-      throw new Error('No code provided');
-    }
-    console.log('Code received, length:', code.length);
-
-    this.consoleOutput = [];
-    this.setupConsoleCapture();
-
     try {
-      // 2. Parse code
-      console.log('Parsing code...');
-      const cleanInstructions = readAsmFile(code);
-      console.log('Clean instructions:', cleanInstructions);
-
-      // 3. Parse labels and instructions
-      console.log('Parsing labels and instructions...');
-      const [instructions, labels, memory] = parseLabelsAndInstructions(cleanInstructions);
-      console.log('Parsed result:', {
-        instructionsCount: instructions.length,
-        labelsCount: Object.keys(labels).length,
-        memoryEntriesCount: Object.keys(memory).length
-      });
-
-      // 4. Create simulator
-      console.log('Creating simulator...');
-      this.simulator = new MIPSSimulator(instructions, labels, memory, false);
+      // Clear previous state
+      this.reset();
       
-      // 5. Run simulation
-      console.log('Running simulation...');
-      this.simulator.run();
-      console.log('Simulation completed');
+      // Log the start of execution
+      console.log('=== DIRECT EXECUTION START ===');
+      console.log('Received code:', code);
+      
+      // Try direct execution
+      if (!code) {
+        throw new Error('No code provided');
+      }
 
-      // 6. Get results
-      const result = {
-        registers: this.simulator.getRegisters(),
-        memory: this.simulator.getMemory(),
-        output: this.consoleOutput
+      // Test if we can access the code
+      alert(`About to execute code of length: ${code.length}`);
+      
+      // Create basic result for testing
+      const testResult: SimulationResult = {
+        registers: { '$v0': 4, '$a0': 0 },
+        memory: { 0: 72 }, // ASCII value for 'H'
+        output: ['Test output', code.split('\n')[0]]
       };
 
-      console.log('=== EXECUTION RESULTS ===');
-      console.log('Registers:', Object.keys(result.registers).length);
-      console.log('Memory entries:', Object.keys(result.memory).length);
-      console.log('Output lines:', result.output.length);
-      console.log('Output:', result.output);
-
-      return result;
+      console.log('Created test result:', testResult);
+      alert('Execution completed - check console');
+      
+      return testResult;
 
     } catch (error) {
-      console.error('=== EXECUTION ERROR ===');
-      console.error('Error details:', error);
-      console.error('Error occurred at step:', error.stack);
-      throw new Error(`Execution failed: ${error.message}`);
+      console.error('Execution failed:', error);
+      alert('Execution error: ' + error.message);
+      throw error;
     }
   }
 
   public reset(): void {
-    console.log('Resetting simulator');
     this.simulator = null;
     this.consoleOutput = [];
+    console.log('Simulator reset');
   }
 }
 
+// Create and export a single instance
 export const simulatorService = new SimulatorService();
-console.log('Simulator service initialized'); 
+console.log('Simulator service created');
+
+// Test the service is loaded
+alert('Simulator service loaded'); 

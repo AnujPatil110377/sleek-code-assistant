@@ -2,49 +2,34 @@
 
 import { DragHandleDots2Icon } from '@radix-ui/react-icons'
 import * as ResizablePrimitive from 'react-resizable-panels'
+import { cn } from '@/lib/utils'
+
+const ResizablePanelGroup = ({
+  className,
+  ...props
+}: React.ComponentProps<typeof ResizablePrimitive.PanelGroup>) => (
+  <ResizablePrimitive.PanelGroup
+    className={cn(
+      "flex h-full w-full data-[panel-group-direction=vertical]:flex-col",
+      className
+    )}
+    {...props}
+  />
+)
 
 const ResizablePanel = ResizablePrimitive.Panel
 
 const ResizableHandle = ({
   className,
   ...props
-}: React.HTMLAttributes<HTMLDivElement>) => (
+}: React.ComponentProps<typeof ResizablePrimitive.PanelResizeHandle>) => (
   <ResizablePrimitive.PanelResizeHandle
-    className={className}
+    className={cn(
+      "relative flex w-full items-center justify-center",
+      className
+    )}
     {...props}
-  >
-    <DragHandleDots2Icon className="h-4 w-4" />
-  </ResizablePrimitive.PanelResizeHandle>
+  />
 )
 
-const ResizableBox = ({
-  children,
-  defaultSize,
-  minHeight,
-  maxHeight,
-  className,
-  handle,
-}: {
-  children: React.ReactNode
-  defaultSize: { height: string }
-  minHeight?: number | string
-  maxHeight?: number | string
-  className?: string
-  handle?: React.ReactNode
-}) => {
-  return (
-    <div 
-      className={className}
-      style={{ 
-        height: defaultSize.height,
-        minHeight,
-        maxHeight,
-      }}
-    >
-      {children}
-      {handle}
-    </div>
-  )
-}
-
-export { ResizablePanel, ResizableHandle, ResizableBox }
+export { ResizablePanelGroup, ResizablePanel, ResizableHandle }

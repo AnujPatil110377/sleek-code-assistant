@@ -4,8 +4,7 @@ import React, { useState } from 'react'
 import Toolbar from '@/components/Toolbar'
 import CodeEditor from '@/components/CodeEditor'
 import ConsoleOutput from '@/components/ConsoleOutput'
-import RegistersViewer from '@/components/RegistersViewer'
-import MemoryViewer from '@/components/MemoryViewer'
+import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from '@/components/ui/resizable'
 
 const Page = () => {
   const [code, setCode] = useState('')
@@ -27,31 +26,27 @@ const Page = () => {
   }
 
   return (
-    <div className="h-[calc(100vh-2rem)] flex flex-col max-h-screen">
+    <div className="h-screen flex flex-col">
       <Toolbar 
         onAssemble={handleAssemble}
         onReset={handleReset}
         onStep={handleStep}
         onCodeChange={setCode}
       />
-      <div className="flex-1 flex overflow-hidden">
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="h-[400px]">
-            <CodeEditor code={code} onChange={setCode} />
-          </div>
-          <div className="h-[250px]">
-            <ConsoleOutput output={output} />
-          </div>
-        </div>
-        <div className="w-[400px] border-l border-gray-700 flex flex-col">
-          <div className="h-1/2">
-            <RegistersViewer />
-          </div>
-          <div className="h-1/2 border-t border-gray-700">
-            <MemoryViewer />
-          </div>
-        </div>
-      </div>
+      <ResizablePanelGroup
+        direction="vertical"
+        className="flex-1"
+      >
+        <ResizablePanel defaultSize={60} minSize={30}>
+          <CodeEditor code={code} onChange={setCode} />
+        </ResizablePanel>
+        <ResizableHandle className="h-2 bg-gray-700 hover:bg-blue-500 transition-colors cursor-row-resize flex items-center justify-center">
+          <div className="w-8 h-1 bg-gray-600 rounded-full" />
+        </ResizableHandle>
+        <ResizablePanel defaultSize={40}>
+          <ConsoleOutput output={output} />
+        </ResizablePanel>
+      </ResizablePanelGroup>
     </div>
   )
 }

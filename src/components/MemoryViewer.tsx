@@ -9,7 +9,7 @@ const MemoryViewer = () => {
   ]
 
   return (
-    <div className="h-[40vh] p-4">
+    <div className="h-[40vh] p-3">
       <div className="bg-gray-800 rounded-lg p-2 h-full w-[600px]">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm font-semibold">Memory</h2>

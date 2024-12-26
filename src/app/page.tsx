@@ -7,7 +7,6 @@ import ConsoleOutput from '@/components/ConsoleOutput';
 import MemoryViewer from '@/components/MemoryViewer';
 import RegisterViewer from '@/components/RegisterViewer';
 import { simulatorService } from '@/services/simulatorService';
-console.log('Simulator service imported:', !!simulatorService);
 
 export default function Home() {
   const [code, setCode] = useState(`# Test MIPS program
@@ -15,7 +14,6 @@ export default function Home() {
     hello: .asciiz "Hello, world!\\n"
 
 .text
-main:
     li $v0, 4
     la $a0, hello
     syscall`);
@@ -24,46 +22,43 @@ main:
   const [memory, setMemory] = useState<{[address: number]: number}>({});
   const [registers, setRegisters] = useState<{[key: string]: number}>({});
 
-  const handleExecute = () => {
-    // Add alert to verify function is called
-    alert('Execute function called!');
+  // New test function
+  const testSimpleExecution = () => {
+    console.log('=== TEST EXECUTION START ===');
+    alert('Starting test execution');
     
-    console.log('=== Execute Function Started ===');
-    console.log('Current code in editor:', code);
-    
-    if (!code) {
-      console.error('No code to execute!');
-      setOutput('Error: No code to execute!');
-      return;
-    }
-
     try {
-      console.log('Calling simulator service...');
+      // Log current state
+      console.log('Current code:', code);
+      
+      // Try to execute
       const result = simulatorService.executeCode(code);
       
-      console.log('Execution successful!');
-      console.log('Results:', result);
-      
-      // Update UI
+      // Update UI with results
+      console.log('Execution result:', result);
       setRegisters(result.registers);
       setMemory(result.memory);
       setOutput(result.output.join('\n'));
       
-      alert('Execution completed!');
+      alert('Test execution completed!');
     } catch (error) {
-      console.error('Execution failed:', error);
-      setOutput(`Error: ${error.message}`);
-      alert('Execution failed: ' + error.message);
+      console.error('Test execution failed:', error);
+      alert('Error: ' + error.message);
     }
   };
 
   return (
     <main className="min-h-screen bg-gray-900 text-white">
+      {/* Add test button at the top */}
+      <button 
+        onClick={testSimpleExecution}
+        className="m-4 p-2 bg-red-500 hover:bg-red-600 text-white rounded"
+      >
+        Test Direct Execution
+      </button>
+
       <Toolbar 
-        onExecute={() => {
-          console.log('Toolbar triggered execute');
-          handleExecute();
-        }}
+        onExecute={testSimpleExecution}  // Use the test function here
         onReset={() => {
           console.log('Reset clicked');
           simulatorService.reset();

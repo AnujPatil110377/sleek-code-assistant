@@ -11,33 +11,38 @@ interface CodeEditorProps {
 
 const CodeEditor = ({ code, onChange, onRun }: CodeEditorProps) => {
   const editorRef = useRef<any>(null);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const rafRef = useRef<number>();
+  const isResizing = useRef(false);
 
   useEffect(() => {
     const editorContainer = document.querySelector('.editor-container');
     if (!editorContainer) return;
 
-    const resizeObserver = new ResizeObserver(() => {
-      // Clear any existing timeout
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
+    const updateLayout = () => {
+      if (!isResizing.current) return;
+      
+      if (editorRef.current?.layout) {
+        console.log('Updating editor layout');
+        editorRef.current.layout();
       }
+      
+      rafRef.current = requestAnimationFrame(updateLayout);
+    };
 
-      // Debounce the layout update
-      timeoutRef.current = setTimeout(() => {
-        if (editorRef.current?.layout) {
-          console.log('Updating editor layout');
-          editorRef.current.layout();
-        }
-      }, 100);
+    const resizeObserver = new ResizeObserver(() => {
+      if (!isResizing.current) {
+        isResizing.current = true;
+        rafRef.current = requestAnimationFrame(updateLayout);
+      }
     });
 
     resizeObserver.observe(editorContainer);
 
     return () => {
+      isResizing.current = false;
       resizeObserver.disconnect();
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
       }
     };
   }, []);

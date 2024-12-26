@@ -13,6 +13,10 @@ export class MIPSSimulator {
   private instructions: string[];
   private singleStep: boolean;
 
+  public onRegistersUpdate?: (registers: RegisterMap) => void;
+  public onMemoryUpdate?: (memory: Memory) => void;
+  public onOutput?: (output: SimulatorOutput) => void;
+
   constructor(instructions: string[], labels: Labels, memory: Memory, singleStep: boolean = false) {
     this.instructions = instructions;
     this.labels = labels;
@@ -35,26 +39,43 @@ export class MIPSSimulator {
     const syscallNum = this.state.registers['v0'];
     
     switch(syscallNum) {
-      case 1:  // Print integer
-        console.log(`Output (int): ${this.state.registers['a0']}`);
+      case 1: {  // Print integer
+        const output = {
+          type: 'int' as const,
+          value: this.state.registers['a0']
+        };
+        if (this.onOutput) {
+          this.onOutput(output);
+        }
         break;
-        
-      case 4:  // Print string
+      }
+      
+      case 4: {  // Print string
         let output = '';
         let address = this.state.registers['a0'];
         while (this.state.memory[address] !== 0) {
           output += String.fromCharCode(this.state.memory[address]);
           address++;
         }
-        console.log(`Output (string): ${output}`);
+        if (this.onOutput) {
+          this.onOutput({
+            type: 'string',
+            value: output
+          });
+        }
         break;
-        
+      }
+      
       case 10:  // Exit program
-        console.log('Program exit requested');
         return false;
         
       default:
-        console.log(`Unknown syscall: ${syscallNum}`);
+        if (this.onOutput) {
+          this.onOutput({
+            type: 'string',
+            value: `Unknown syscall: ${syscallNum}`
+          });
+        }
     }
     
     return true;
@@ -203,29 +224,15 @@ export class MIPSSimulator {
   }
 
   public displayRegisters(): void {
-    console.log('\nRegisters:');
-    for (let i = 0; i < 32; i += 4) {
-      const regs = Array.from({ length: 4 }, (_, j) => {
-        const regNum = i + j;
-        const regName = getRegisterName(regNum);
-        return `$${regName}: ${this.state.registers[regName]}`;
-      });
-      console.log(regs.join(' | '));
+    if (this.onRegistersUpdate) {
+      this.onRegistersUpdate(this.state.registers);
     }
-    console.log();
   }
 
   public displayMemory(): void {
-    console.log('\nMemory:');
-    const addresses = Object.keys(this.state.memory).map(Number).sort((a, b) => a - b);
-    for (const addr of addresses) {
-      const value = this.state.memory[addr];
-      const display = value >= 32 && value <= 126 
-        ? `${value} ('${String.fromCharCode(value)}')`
-        : value;
-      console.log(`Address 0x${addr.toString(16).padStart(8, '0')}: ${display}`);
+    if (this.onMemoryUpdate) {
+      this.onMemoryUpdate(this.state.memory);
     }
-    console.log();
   }
 
   public run(): void {

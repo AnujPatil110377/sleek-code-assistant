@@ -8,7 +8,7 @@ const ConsoleOutput = ({ output }: { output: string }) => {
           <span className="text-xs font-medium text-blue-400">Output</span>
         </div>
         <div className="flex-1 p-4 font-mono text-xs overflow-auto bg-gray-800">
-          <div className="text-blue-400">
+          <div className="text-blue-400 whitespace-pre-wrap">
             {output || 'Run code to see output...'}
           </div>
         </div>

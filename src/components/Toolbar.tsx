@@ -1,16 +1,21 @@
 import { Button } from "@/components/ui/button"
 import { Upload } from "lucide-react"
+import { Tool, Play } from "lucide-react"
 
 const Toolbar = ({ 
   onAssemble, 
+  onExecute,
   onReset, 
-  onStep,
-  onCodeChange 
+  onStep, 
+  onCodeChange,
+  isAssembled 
 }: { 
   onAssemble: () => void;
+  onExecute: () => void;
   onReset: () => void;
   onStep: () => void;
   onCodeChange: (code: string) => void;
+  isAssembled: boolean;
 }) => {
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -25,6 +30,16 @@ const Toolbar = ({
       reader.readAsText(file)
     }
   }
+
+  const handleAssembleClick = () => {
+    console.log('Assemble button clicked');
+    onAssemble();
+  };
+
+  const handleExecuteClick = () => {
+    console.log('Execute button clicked');
+    onExecute();
+  };
 
   return (
     <div className="bg-gray-800 border-b border-gray-700 p-2 flex items-center justify-between">
@@ -49,13 +64,20 @@ const Toolbar = ({
         <div className="h-4 w-px bg-gray-700" />
         <Button 
           variant="secondary" 
-          className="bg-blue-600 hover:bg-blue-700 text-white"
-          onClick={() => {
-            console.log('Run button clicked');
-            onAssemble();
-          }}
+          className="bg-green-600 hover:bg-green-700 text-white"
+          onClick={handleAssembleClick}
         >
-          Run
+          <Tool className="w-4 h-4 mr-2" />
+          Assemble
+        </Button>
+        <Button 
+          variant="secondary" 
+          className={`bg-blue-600 hover:bg-blue-700 text-white ${!isAssembled && 'opacity-50'}`}
+          onClick={handleExecuteClick}
+          disabled={!isAssembled}
+        >
+          <Play className="w-4 h-4 mr-2" />
+          Execute
         </Button>
         <Button 
           variant="secondary" 

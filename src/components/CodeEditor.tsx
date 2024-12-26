@@ -1,7 +1,7 @@
 'use client'
 
 const CodeEditor = ({ code, onChange }: { code: string; onChange: (value: string) => void }) => {
-  console.log('CodeEditor rendering with code:', code); // Debug log
+  console.log('CodeEditor rendering with code:', code?.substring(0, 100) + '...'); // Show first 100 chars
   
   return (
     <div className="flex-1 min-h-0 p-4">
@@ -13,7 +13,7 @@ const CodeEditor = ({ code, onChange }: { code: string; onChange: (value: string
           className="w-full h-full bg-gray-800 text-gray-100 font-mono text-sm p-4 border-none focus:outline-none resize-none"
           value={code}
           onChange={(e) => {
-            console.log('CodeEditor change:', e.target.value); // Debug log
+            console.log('CodeEditor change event:', e.target.value?.substring(0, 100) + '...');
             onChange(e.target.value);
           }}
           spellCheck={false}
@@ -23,4 +23,4 @@ const CodeEditor = ({ code, onChange }: { code: string; onChange: (value: string
   );
 };
 
-export default CodeEditor
+export default CodeEditor;

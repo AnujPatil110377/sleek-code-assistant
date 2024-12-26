@@ -48,6 +48,33 @@ class SimulatorService {
     this.simulator = null;
     this.consoleOutput = [];
   }
+
+  public assemble(code: string): AssembledCode {
+    console.log('=== SIMULATOR SERVICE: ASSEMBLY ===');
+    console.log('Received code:', code?.substring(0, 100) + '...');
+    
+    if (!code || code.trim() === '') {
+      throw new Error('No code provided to assemble');
+    }
+
+    try {
+      console.log('Starting assembly process...');
+      const cleanInstructions = readAsmFile(code);
+      console.log('Clean instructions:', cleanInstructions);
+
+      const [instructions, labels, memory] = parseLabelsAndInstructions(cleanInstructions);
+      console.log('Assembly completed:', { 
+        instructionCount: instructions.length,
+        labelCount: Object.keys(labels).length,
+        memoryEntries: Object.keys(memory).length 
+      });
+
+      return { instructions, labels, memory };
+    } catch (error) {
+      console.error('Assembly failed in simulator service:', error);
+      throw error;
+    }
+  }
 }
 
 export const simulatorService = new SimulatorService(); 

@@ -12,21 +12,23 @@ const CodeEditor = ({ code, onChange }: CodeEditorProps) => {
 
   useEffect(() => {
     const handleResize = () => {
-      // Clear any existing timeout
+      // Cancel any pending layout updates
       if (resizeTimeoutRef.current) {
         clearTimeout(resizeTimeoutRef.current);
       }
 
-      // Debounce the layout update
-      resizeTimeoutRef.current = setTimeout(() => {
-        if (editorRef.current?.layout) {
-          console.log('Updating editor layout');
-          editorRef.current.layout();
-        }
-      }, 100);
+      // Schedule a new layout update with RAF for smoother handling
+      requestAnimationFrame(() => {
+        resizeTimeoutRef.current = setTimeout(() => {
+          if (editorRef.current?.layout) {
+            console.log('Updating editor layout');
+            editorRef.current.layout();
+          }
+        }, 100);
+      });
     };
 
-    // Create ResizeObserver with debounced handler
+    // Create ResizeObserver with optimized handler
     const resizeObserver = new ResizeObserver(() => {
       handleResize();
     });
@@ -49,8 +51,11 @@ const CodeEditor = ({ code, onChange }: CodeEditorProps) => {
 
   const handleEditorDidMount = (editor: any) => {
     editorRef.current = editor;
-    editor.layout();
-    console.log('Editor mounted successfully');
+    // Delay initial layout to ensure proper rendering
+    requestAnimationFrame(() => {
+      editor.layout();
+      console.log('Editor mounted successfully');
+    });
   };
 
   return (

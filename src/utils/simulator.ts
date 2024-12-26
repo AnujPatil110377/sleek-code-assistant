@@ -11,12 +11,12 @@ export class MIPSSimulator {
   private state: SimulatorState;
   private labels: Labels;
   private instructions: string[];
-  private singleStep: boolean;
+  private pc: number;
 
-  constructor(instructions: string[], labels: Labels, memory: Memory, singleStep: boolean = false) {
+  constructor(instructions: string[], labels: Labels, memory: Memory) {
     this.instructions = instructions;
     this.labels = labels;
-    this.singleStep = singleStep;
+    this.pc = 0;
     
     // Initialize simulator state
     this.state = {
@@ -29,6 +29,35 @@ export class MIPSSimulator {
 
     // Initialize special registers
     this.state.registers['sp'] = 0x7FFFFFFC;  // Stack pointer
+  }
+
+  public run(): void {
+    while (this.pc < this.instructions.length * 4) {
+      this.step();
+    }
+  }
+
+  public step(): void {
+    if (this.pc >= this.instructions.length * 4) {
+      throw new Error('Program completed');
+    }
+
+    const instructionIndex = this.pc / 4;
+    const instruction = this.instructions[instructionIndex];
+    
+    if (!this.executeInstruction(instruction)) {
+      throw new Error('Execution failed');
+    }
+    
+    this.pc += 4;
+  }
+
+  public getRegisters(): { [key: string]: number } {
+    return { ...this.state.registers };
+  }
+
+  public getMemory(): { [address: number]: number } {
+    return { ...this.state.memory };
   }
 
   private syscall(): boolean {
@@ -226,45 +255,5 @@ export class MIPSSimulator {
       console.log(`Address 0x${addr.toString(16).padStart(8, '0')}: ${display}`);
     }
     console.log();
-  }
-
-  public run(): void {
-    while (this.state.pc < this.instructions.length * 4) {
-      const instructionIndex = this.state.pc / 4;
-      const instruction = this.instructions[instructionIndex];
-
-      if (this.singleStep) {
-        console.log('\n' + '='.repeat(80));
-        console.log('Current instruction:', instruction);
-        console.log('PC:', this.state.pc);
-      }
-
-      if (!this.executeInstruction(instruction)) {
-        break;
-      }
-
-      if (this.singleStep) {
-        this.displayRegisters();
-        this.displayMemory();
-        // In a real implementation, you might want to use a more sophisticated
-        // way to handle single-stepping
-        prompt('Press Enter to continue...');
-      }
-
-      this.state.pc += 4;
-    }
-
-    if (!this.singleStep) {
-      this.displayRegisters();
-      this.displayMemory();
-    }
-  }
-
-  public getRegisters(): { [key: string]: number } {
-    return { ...this.state.registers };
-  }
-
-  public getMemory(): { [address: number]: number } {
-    return { ...this.state.memory };
   }
 } 

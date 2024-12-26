@@ -5,6 +5,19 @@ import { CodeEditor } from '@/components/CodeEditor'
 const Page = () => {
   const [code, setCode] = useState('')
 
+  const handleAssemble = () => {
+    console.log('Assembling code:', code)
+  }
+
+  const handleReset = () => {
+    console.log('Resetting simulator')
+    setCode('')
+  }
+
+  const handleStep = () => {
+    console.log('Stepping through code')
+  }
+
   return (
     <div>
       <Toolbar 
@@ -21,4 +34,4 @@ const Page = () => {
   )
 }
 
-export default Page 
+export default Page

@@ -4,42 +4,48 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 
 const ConsoleOutput = ({ output }: { output: string }) => {
-  const [activeTab, setActiveTab] = useState<'log' | 'io'>('io')
+  const [activeTab, setActiveTab] = useState<'testcases' | 'result'>('result')
   
   return (
     <div className="h-48 p-4">
-      <div className="bg-gray-800 rounded-lg h-full flex flex-col overflow-hidden">
-        <div className="flex border-b border-gray-700">
+      <div className="bg-[#1e1e1e] rounded-lg h-full flex flex-col overflow-hidden border border-gray-700">
+        <div className="flex border-b border-gray-700 bg-[#252526]">
           <Button
             variant="ghost"
-            className={`px-4 py-1 text-xs rounded-none ${
-              activeTab === 'log' ? 'bg-gray-700' : ''
+            className={`px-4 py-2 text-xs rounded-none hover:bg-[#2d2d2d] ${
+              activeTab === 'testcases' ? 'bg-[#2d2d2d] text-white' : 'text-gray-400'
             }`}
-            onClick={() => setActiveTab('log')}
+            onClick={() => setActiveTab('testcases')}
           >
-            Log
+            Testcases
           </Button>
           <Button
             variant="ghost"
-            className={`px-4 py-1 text-xs rounded-none ${
-              activeTab === 'io' ? 'bg-gray-700' : ''
+            className={`px-4 py-2 text-xs rounded-none hover:bg-[#2d2d2d] ${
+              activeTab === 'result' ? 'bg-[#2d2d2d] text-white' : 'text-gray-400'
             }`}
-            onClick={() => setActiveTab('io')}
+            onClick={() => setActiveTab('result')}
           >
-            Program I/O
+            Result
           </Button>
         </div>
-        <div className="flex-1 p-2 font-mono text-xs overflow-auto">
-          {activeTab === 'io' ? (
+        <div className="flex-1 p-4 font-mono text-xs overflow-auto bg-[#1e1e1e]">
+          {activeTab === 'result' ? (
             <div className="text-green-400">
-              {output}
+              ✓ Accepted
+              <br />Runtime: 4 ms
+              <br />Memory: 8.2 MB
             </div>
           ) : (
-            <div className="text-gray-400">
-              [info] Program loaded successfully
-              <br />[info] Starting execution at 0x00400000
-              <br />[debug] Syscall 4: print_string
-              <br />[info] Program completed normally
+            <div className="space-y-2">
+              <div className="p-2 bg-[#252526] rounded">
+                <div className="text-gray-400 mb-1">Input:</div>
+                <div className="text-white">{output}</div>
+              </div>
+              <div className="p-2 bg-[#252526] rounded">
+                <div className="text-gray-400 mb-1">Expected:</div>
+                <div className="text-white">[2, 7]</div>
+              </div>
             </div>
           )}
         </div>
@@ -48,4 +54,4 @@ const ConsoleOutput = ({ output }: { output: string }) => {
   )
 }
 
-export default ConsoleOutput;
+export default ConsoleOutput

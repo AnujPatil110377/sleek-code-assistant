@@ -11,9 +11,7 @@ const CodeEditor = ({ code, onChange }: { code: string; onChange: (value: string
           className="w-full h-full bg-[#1e1e1e] text-gray-100 font-mono text-sm p-4 border-none focus:outline-none resize-none [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-gray-600 [&::-webkit-scrollbar-track]:bg-[#1e1e1e]"
           style={{
             lineHeight: '1.5',
-            backgroundImage: 'linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px)',
-            backgroundSize: '3ch 1px',
-            paddingLeft: '6ch'
+            paddingLeft: '2rem'
           }}
           value={code}
           onChange={(e) => onChange(e.target.value)}

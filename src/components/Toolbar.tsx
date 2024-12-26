@@ -7,7 +7,7 @@ import {
   Pause, 
   StepForward, 
   Settings, 
-  Tool
+  ArrowRight
 } from 'lucide-react';
 
 interface ToolbarProps {
@@ -41,7 +41,7 @@ const Toolbar: FC<ToolbarProps> = ({ onRun }) => {
         <Settings size={16} />
       </button>
       <button className="p-1 hover:bg-background rounded" title="Tools">
-        <Tool size={16} />
+        <ArrowRight size={16} />
       </button>
       
       <div className="ml-auto flex items-center gap-2">
@@ -55,4 +55,4 @@ const Toolbar: FC<ToolbarProps> = ({ onRun }) => {
   );
 };
 
-export default Toolbar; 
+export default Toolbar;

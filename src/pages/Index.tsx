@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,9 +28,29 @@ const Index = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Array<{text: string, isUser: boolean}>>([]);
+  const [editorMounted, setEditorMounted] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (editorMounted) {
+        // Force editor layout update
+        window.dispatchEvent(new Event('resize'));
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [editorMounted]);
+
+  const handleEditorDidMount = () => {
+    setEditorMounted(true);
+    // Initial layout update
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 100);
+  };
 
   const handleRunCode = () => {
-    // Simulate code execution
     setOutput('Hello, world! This string is from MIPS!\n0 1 2 3 4');
     console.log('Running MIPS code:', code);
   };
@@ -86,6 +106,7 @@ const Index = () => {
               readOnly: false,
               automaticLayout: true,
             }}
+            onMount={handleEditorDidMount}
           />
         </div>
 

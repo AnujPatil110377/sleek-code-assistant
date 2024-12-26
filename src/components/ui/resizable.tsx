@@ -9,12 +9,12 @@ const ResizableHandle = ({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div 
+  <ResizablePrimitive.PanelResizeHandle
     className={className}
     {...props}
   >
     <DragHandleDots2Icon className="h-4 w-4" />
-  </div>
+  </ResizablePrimitive.PanelResizeHandle>
 )
 
 const ResizableBox = ({

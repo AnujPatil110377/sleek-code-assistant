@@ -1,6 +1,6 @@
 const MemoryViewer = () => {
   const memoryData = [
-    { address: '10000000', data: '48 65 6c 6c 6f 2c 20 77 6f 72 6c 64 21 20 54 68', ascii: 'Hello, world! Th' },
+    { address: '10000000', data: '48 65 6c 6c 6f 2c 20 77 6f 72 6c 64 21 20 54 68', ascii: 'Hello, world! ThE PUSSY OF THE WORLD' },
     { address: '10000010', data: '69 73 20 73 74 72 69 6e 67 20 69 73 20 66 72 6f', ascii: 'is string is fro' },
     { address: '10000020', data: '6d 20 4d 49 50 53 21 0a 00 00 00 00 20 00 00 00', ascii: 'm MIPS!....    .' },
     { address: '10000030', data: '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00', ascii: '................' },

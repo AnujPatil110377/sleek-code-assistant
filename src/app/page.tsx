@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import CodeEditor from '@/components/CodeEditor';
 import Toolbar from '@/components/Toolbar';
 import ConsoleOutput from '@/components/ConsoleOutput';
@@ -15,63 +15,62 @@ export default function Home() {
 
 .text
 main:
-    li $v0, 4       # syscall 4 (print_str)
-    la $a0, hello   # argument: string
-    syscall         # print the string`);
+    li $v0, 4
+    la $a0, hello
+    syscall`);
   
   const [output, setOutput] = useState('');
   const [memory, setMemory] = useState<{[address: number]: number}>({});
   const [registers, setRegisters] = useState<{[key: string]: number}>({});
 
-  useEffect(() => {
-    console.log('=== Code Changed ===');
-    console.log(code);
-  }, [code]);
-
   const handleExecute = () => {
-    console.log('=== Execute Button Clicked ===');
-    console.log('Current code:', code);
+    // Add alert to verify function is called
+    alert('Execute function called!');
     
-    if (!code || code.trim() === '') {
+    console.log('=== Execute Function Started ===');
+    console.log('Current code in editor:', code);
+    
+    if (!code) {
       console.error('No code to execute!');
       setOutput('Error: No code to execute!');
       return;
     }
 
     try {
-      console.log('Calling simulatorService.executeCode...');
+      console.log('Calling simulator service...');
       const result = simulatorService.executeCode(code);
       
-      console.log('=== Execution Results ===');
-      console.log('Registers:', result.registers);
-      console.log('Memory:', result.memory);
-      console.log('Output:', result.output);
+      console.log('Execution successful!');
+      console.log('Results:', result);
       
+      // Update UI
       setRegisters(result.registers);
       setMemory(result.memory);
       setOutput(result.output.join('\n'));
+      
+      alert('Execution completed!');
     } catch (error) {
-      console.error('=== Execution Error ===');
-      console.error(error);
+      console.error('Execution failed:', error);
       setOutput(`Error: ${error.message}`);
+      alert('Execution failed: ' + error.message);
     }
-  };
-
-  const handleReset = () => {
-    console.log('=== Reset Button Clicked ===');
-    simulatorService.reset();
-    setOutput('');
-    setMemory({});
-    setRegisters({});
   };
 
   return (
     <main className="min-h-screen bg-gray-900 text-white">
       <Toolbar 
-        onExecute={handleExecute}
-        onReset={handleReset}
+        onExecute={() => {
+          console.log('Toolbar triggered execute');
+          handleExecute();
+        }}
+        onReset={() => {
+          console.log('Reset clicked');
+          simulatorService.reset();
+          setOutput('');
+          setMemory({});
+          setRegisters({});
+        }}
         onCodeChange={setCode}
-        isAssembled={true}
       />
       <div className="grid grid-cols-2 gap-4 p-4">
         <div>

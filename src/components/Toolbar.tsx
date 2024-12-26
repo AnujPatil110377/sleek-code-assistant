@@ -47,7 +47,17 @@ const Toolbar = ({ onExecute, onReset, onCodeChange, isAssembled = false }: Tool
       <Button 
         variant="secondary" 
         className="bg-blue-600 hover:bg-blue-700 text-white"
-        onClick={onExecute}
+        onClick={() => {
+          console.log('Run button clicked');
+          alert('Run button clicked');
+          if (onExecute) {
+            console.log('Calling onExecute function');
+            onExecute();
+          } else {
+            console.error('onExecute function is not defined!');
+            alert('Error: Execute function not found!');
+          }
+        }}
       >
         <Play className="w-4 h-4 mr-2" />
         Run

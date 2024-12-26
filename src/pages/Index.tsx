@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Play } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 import CodeEditor from '@/components/CodeEditor';
 import OutputPanel from '@/components/OutputPanel';
 import ChatPanel from '@/components/ChatPanel';
@@ -34,20 +34,6 @@ const Index = () => {
     console.log('Running MIPS code:', code);
   };
 
-  const handleSendMessage = () => {
-    if (!message.trim()) return;
-    
-    setMessages(prev => [...prev, { text: message, isUser: true }]);
-    // Simulate AI response
-    setTimeout(() => {
-      setMessages(prev => [...prev, { 
-        text: "I've analyzed your code. The syntax looks correct. You can try running it to see the output.", 
-        isUser: false 
-      }]);
-    }, 1000);
-    setMessage('');
-  };
-
   return (
     <div className="min-h-screen bg-background">
       <nav className="h-16 border-b flex items-center justify-between px-4">
@@ -61,18 +47,12 @@ const Index = () => {
         </Button>
       </nav>
 
-      <div className="editor-container">
-        <div className="code-editor">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-medium">Code Editor</h2>
-            <Button onClick={handleRunCode} size="sm">
-              <Play className="h-4 w-4 mr-2" />
-              Run Code
-            </Button>
-          </div>
-          <CodeEditor code={code} onChange={(value) => setCode(value || '')} />
-        </div>
-
+      <div className="flex flex-col h-[calc(100vh-4rem)]">
+        <CodeEditor 
+          code={code} 
+          onChange={(value) => setCode(value || '')} 
+          onRun={handleRunCode}
+        />
         <OutputPanel output={output} />
       </div>
 
@@ -82,7 +62,11 @@ const Index = () => {
         messages={messages}
         message={message}
         onMessageChange={setMessage}
-        onSendMessage={handleSendMessage}
+        onSendMessage={() => {
+          if (!message.trim()) return;
+          setMessages(prev => [...prev, { text: message, isUser: true }]);
+          setMessage('');
+        }}
       />
     </div>
   );

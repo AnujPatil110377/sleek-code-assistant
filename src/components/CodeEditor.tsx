@@ -11,35 +11,33 @@ interface CodeEditorProps {
 
 const CodeEditor = ({ code, onChange, onRun }: CodeEditorProps) => {
   const editorRef = useRef<any>(null);
-  const frameRef = useRef<number>();
+  const timeoutRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
     const editorContainer = document.querySelector('.editor-container');
     if (!editorContainer) return;
 
-    const resizeObserver = new ResizeObserver((entries) => {
-      // Cancel any pending animation frame
-      if (frameRef.current) {
-        cancelAnimationFrame(frameRef.current);
+    const resizeObserver = new ResizeObserver(() => {
+      // Clear any existing timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
       }
 
-      // Schedule a new layout update
-      frameRef.current = requestAnimationFrame(() => {
-        entries.forEach(() => {
-          if (editorRef.current?.layout) {
-            console.log('Updating editor layout');
-            editorRef.current.layout();
-          }
-        });
-      });
+      // Debounce the layout update
+      timeoutRef.current = setTimeout(() => {
+        if (editorRef.current?.layout) {
+          console.log('Updating editor layout');
+          editorRef.current.layout();
+        }
+      }, 100);
     });
 
     resizeObserver.observe(editorContainer);
 
     return () => {
       resizeObserver.disconnect();
-      if (frameRef.current) {
-        cancelAnimationFrame(frameRef.current);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
       }
     };
   }, []);
@@ -74,7 +72,7 @@ const CodeEditor = ({ code, onChange, onRun }: CodeEditorProps) => {
             onMount={handleEditorDidMount}
           />
         </div>
-        <RegistersPanel />
+        <RegistersPanel registers={[]} />
       </div>
     </div>
   );

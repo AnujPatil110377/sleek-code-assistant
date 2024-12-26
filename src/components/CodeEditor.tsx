@@ -13,7 +13,6 @@ const CodeEditor = ({ code, onChange }: CodeEditorProps) => {
   useEffect(() => {
     let resizeTimeout: NodeJS.Timeout;
     
-    // Create the resize observer
     resizeObserverRef.current = new ResizeObserver((entries) => {
       clearTimeout(resizeTimeout);
       resizeTimeout = setTimeout(() => {
@@ -25,13 +24,11 @@ const CodeEditor = ({ code, onChange }: CodeEditorProps) => {
       }, 100);
     });
 
-    // Start observing the editor container
     const editorContainer = document.querySelector('.editor-container');
     if (editorContainer) {
       resizeObserverRef.current.observe(editorContainer);
     }
 
-    // Cleanup
     return () => {
       if (resizeObserverRef.current) {
         resizeObserverRef.current.disconnect();
@@ -46,24 +43,46 @@ const CodeEditor = ({ code, onChange }: CodeEditorProps) => {
   };
 
   return (
-    <div className="editor-container h-full">
-      <Editor
-        height="calc(100% - 3rem)"
-        defaultLanguage="mips"
-        value={code}
-        onChange={onChange}
-        theme="vs-dark"
-        options={{
-          minimap: { enabled: false },
-          fontSize: 14,
-          lineNumbers: 'on',
-          roundedSelection: false,
-          scrollBeyondLastLine: false,
-          readOnly: false,
-          automaticLayout: true,
-        }}
-        onMount={handleEditorDidMount}
-      />
+    <div className="flex h-full">
+      <div className="editor-container flex-1 h-full bg-background">
+        <Editor
+          height="100%"
+          width="100%"
+          defaultLanguage="mips"
+          value={code}
+          onChange={onChange}
+          theme="vs-dark"
+          options={{
+            minimap: { enabled: false },
+            fontSize: 14,
+            lineNumbers: 'on',
+            roundedSelection: false,
+            scrollBeyondLastLine: false,
+            readOnly: false,
+            automaticLayout: true,
+            padding: { top: 10, bottom: 10 },
+          }}
+          onMount={handleEditorDidMount}
+        />
+      </div>
+      
+      <div className="w-64 bg-muted p-4 border-l border-border">
+        <h3 className="font-semibold mb-4">Registers</h3>
+        <div className="space-y-2">
+          {Array.from({ length: 32 }, (_, i) => (
+            <div key={i} className="flex justify-between items-center">
+              <span className="text-sm font-mono">${i}</span>
+              <span className="text-sm font-mono text-muted-foreground">0x00000000</span>
+            </div>
+          ))}
+          <div className="mt-4 pt-4 border-t border-border">
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-mono">PC</span>
+              <span className="text-sm font-mono text-muted-foreground">0x00000000</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

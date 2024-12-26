@@ -85,18 +85,17 @@ export class MIPSSimulator {
     const parts = instruction.split(/[,\s()]+/).filter(Boolean);
     const op = parts[0];
 
-    console.log('Executing instruction:', instruction);  // Debug log
-    console.log('Current registers:', this.state.registers);  // Debug log
+    console.log('Executing instruction:', instruction);
+    console.log('Current registers:', this.state.registers);
 
     try {
       switch(op) {
         case 'li': {
           const rt = getRegisterName(getRegisterNumber(parts[1]));
           const imm = parseInt(parts[2]);
-          console.log(`Loading ${imm} into ${rt}`);  // Debug log
+          console.log(`Loading ${imm} into ${rt}`);
           this.state.registers[rt] = imm;
           this.displayRegisters();
-          console.log('Registers after li:', this.state.registers);  // Debug log
           break;
         }
 
@@ -147,7 +146,63 @@ export class MIPSSimulator {
           const rt = getRegisterName(getRegisterNumber(parts[1]));
           const rs = getRegisterName(getRegisterNumber(parts[2]));
           const imm = parseInt(parts[3]);
+          console.log(`ADDI: ${rt} = ${rs} + ${imm}`);
           this.state.registers[rt] = this.state.registers[rs] + imm;
+          this.displayRegisters();
+          break;
+        }
+
+        case 'addiu': {  // Unsigned add immediate
+          const rt = getRegisterName(getRegisterNumber(parts[1]));
+          const rs = getRegisterName(getRegisterNumber(parts[2]));
+          const imm = parseInt(parts[3]) >>> 0;  // Convert to unsigned
+          this.state.registers[rt] = (this.state.registers[rs] + imm) >>> 0;
+          this.displayRegisters();
+          break;
+        }
+
+        case 'andi': {  // And immediate
+          const rt = getRegisterName(getRegisterNumber(parts[1]));
+          const rs = getRegisterName(getRegisterNumber(parts[2]));
+          const imm = parseInt(parts[3]);
+          this.state.registers[rt] = this.state.registers[rs] & imm;
+          this.displayRegisters();
+          break;
+        }
+
+        case 'ori': {  // Or immediate
+          const rt = getRegisterName(getRegisterNumber(parts[1]));
+          const rs = getRegisterName(getRegisterNumber(parts[2]));
+          const imm = parseInt(parts[3]);
+          this.state.registers[rt] = this.state.registers[rs] | imm;
+          this.displayRegisters();
+          break;
+        }
+
+        case 'xori': {  // Xor immediate
+          const rt = getRegisterName(getRegisterNumber(parts[1]));
+          const rs = getRegisterName(getRegisterNumber(parts[2]));
+          const imm = parseInt(parts[3]);
+          this.state.registers[rt] = this.state.registers[rs] ^ imm;
+          this.displayRegisters();
+          break;
+        }
+
+        case 'slti': {  // Set less than immediate
+          const rt = getRegisterName(getRegisterNumber(parts[1]));
+          const rs = getRegisterName(getRegisterNumber(parts[2]));
+          const imm = parseInt(parts[3]);
+          this.state.registers[rt] = this.state.registers[rs] < imm ? 1 : 0;
+          this.displayRegisters();
+          break;
+        }
+
+        case 'sltiu': {  // Set less than immediate unsigned
+          const rt = getRegisterName(getRegisterNumber(parts[1]));
+          const rs = getRegisterName(getRegisterNumber(parts[2]));
+          const imm = parseInt(parts[3]) >>> 0;
+          this.state.registers[rt] = (this.state.registers[rs] >>> 0) < imm ? 1 : 0;
+          this.displayRegisters();
           break;
         }
 
@@ -216,6 +271,33 @@ export class MIPSSimulator {
           return this.syscall();
         }
 
+        case 'sll': {  // Shift left logical
+          const rd = getRegisterName(getRegisterNumber(parts[1]));
+          const rt = getRegisterName(getRegisterNumber(parts[2]));
+          const shamt = parseInt(parts[3]);
+          this.state.registers[rd] = this.state.registers[rt] << shamt;
+          this.displayRegisters();
+          break;
+        }
+
+        case 'srl': {  // Shift right logical
+          const rd = getRegisterName(getRegisterNumber(parts[1]));
+          const rt = getRegisterName(getRegisterNumber(parts[2]));
+          const shamt = parseInt(parts[3]);
+          this.state.registers[rd] = this.state.registers[rt] >>> shamt;
+          this.displayRegisters();
+          break;
+        }
+
+        case 'sra': {  // Shift right arithmetic
+          const rd = getRegisterName(getRegisterNumber(parts[1]));
+          const rt = getRegisterName(getRegisterNumber(parts[2]));
+          const shamt = parseInt(parts[3]);
+          this.state.registers[rd] = this.state.registers[rt] >> shamt;
+          this.displayRegisters();
+          break;
+        }
+
         default:
           console.error(`Unknown operation: ${op}`);
           return false;
@@ -225,15 +307,15 @@ export class MIPSSimulator {
       this.displayRegisters();
       return true;
     } catch (error) {
-      console.error('Error in executeInstruction:', error);  // Debug log
+      console.error('Error in executeInstruction:', error);
       return false;
     }
   }
 
   public displayRegisters(): void {
-    console.log('displayRegisters called, registers:', this.state.registers);  // Debug log
+    console.log('displayRegisters called, registers:', this.state.registers);
     if (this.onRegistersUpdate) {
-      console.log('Calling onRegistersUpdate');  // Debug log
+      console.log('Calling onRegistersUpdate');
       this.onRegistersUpdate(this.state.registers);
     }
   }

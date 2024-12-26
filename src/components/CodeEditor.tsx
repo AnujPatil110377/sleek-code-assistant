@@ -8,54 +8,38 @@ interface CodeEditorProps {
 
 const CodeEditor = ({ code, onChange }: CodeEditorProps) => {
   const editorRef = useRef<any>(null);
-  const resizeTimeoutRef = useRef<NodeJS.Timeout>();
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
   useEffect(() => {
-    const handleResize = () => {
-      // Cancel any pending layout updates
-      if (resizeTimeoutRef.current) {
-        clearTimeout(resizeTimeoutRef.current);
-      }
-
-      // Schedule a new layout update with RAF for smoother handling
-      requestAnimationFrame(() => {
-        resizeTimeoutRef.current = setTimeout(() => {
+    let resizeTimeout: NodeJS.Timeout;
+    
+    resizeObserverRef.current = new ResizeObserver((entries) => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        entries.forEach(() => {
           if (editorRef.current?.layout) {
-            console.log('Updating editor layout');
             editorRef.current.layout();
           }
-        }, 100);
-      });
-    };
-
-    // Create ResizeObserver with optimized handler
-    const resizeObserver = new ResizeObserver(() => {
-      handleResize();
+        });
+      }, 100);
     });
 
-    // Observe the editor container
     const editorContainer = document.querySelector('.editor-container');
     if (editorContainer) {
-      resizeObserver.observe(editorContainer);
-      console.log('Started observing editor container');
+      resizeObserverRef.current.observe(editorContainer);
     }
 
     return () => {
-      if (resizeTimeoutRef.current) {
-        clearTimeout(resizeTimeoutRef.current);
+      if (resizeObserverRef.current) {
+        resizeObserverRef.current.disconnect();
       }
-      resizeObserver.disconnect();
-      console.log('Cleaned up resize observer');
+      clearTimeout(resizeTimeout);
     };
   }, []);
 
   const handleEditorDidMount = (editor: any) => {
     editorRef.current = editor;
-    // Delay initial layout to ensure proper rendering
-    requestAnimationFrame(() => {
-      editor.layout();
-      console.log('Editor mounted successfully');
-    });
+    editor.layout();
   };
 
   return (

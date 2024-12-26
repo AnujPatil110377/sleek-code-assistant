@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import CodeEditor from '@/components/CodeEditor';
 import Toolbar from '@/components/Toolbar';
 import ConsoleOutput from '@/components/ConsoleOutput';
@@ -23,22 +23,43 @@ main:
   const [memory, setMemory] = useState<{[address: number]: number}>({});
   const [registers, setRegisters] = useState<{[key: string]: number}>({});
 
+  // Add logging for code changes
+  useEffect(() => {
+    console.log('=== Code Changed ===');
+    console.log(code);
+  }, [code]);
+
   const handleExecute = () => {
-    console.log('Executing code:', code);
+    console.log('=== Execute Button Clicked ===');
+    console.log('Current code:', code);
+    
+    if (!code || code.trim() === '') {
+      console.error('No code to execute!');
+      setOutput('Error: No code to execute!');
+      return;
+    }
+
     try {
+      console.log('Calling simulatorService.executeCode...');
       const result = simulatorService.executeCode(code);
-      console.log('Execution result:', result);
+      
+      console.log('=== Execution Results ===');
+      console.log('Registers:', result.registers);
+      console.log('Memory:', result.memory);
+      console.log('Output:', result.output);
       
       setRegisters(result.registers);
       setMemory(result.memory);
       setOutput(result.output.join('\n'));
     } catch (error) {
-      console.error('Execution error:', error);
+      console.error('=== Execution Error ===');
+      console.error(error);
       setOutput(`Error: ${error.message}`);
     }
   };
 
   const handleReset = () => {
+    console.log('=== Reset Button Clicked ===');
     simulatorService.reset();
     setOutput('');
     setMemory({});

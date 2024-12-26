@@ -9,11 +9,14 @@ interface ToolbarProps {
 
 const Toolbar = ({ onExecute, onReset, onCodeChange }: ToolbarProps) => {
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('=== File Upload Started ===');
     const file = event.target.files?.[0]
     if (file) {
+      console.log('File selected:', file.name);
       const reader = new FileReader()
       reader.onload = (e) => {
         const text = e.target?.result as string
+        console.log('File contents loaded:', text.substring(0, 100) + '...');
         if (onCodeChange) {
           onCodeChange(text)
         }
@@ -45,7 +48,10 @@ const Toolbar = ({ onExecute, onReset, onCodeChange }: ToolbarProps) => {
       <Button 
         variant="secondary" 
         className="bg-blue-600 hover:bg-blue-700 text-white"
-        onClick={onExecute}
+        onClick={() => {
+          console.log('=== Run Button Clicked ===');
+          onExecute();
+        }}
       >
         <Play className="w-4 h-4 mr-2" />
         Run
@@ -54,7 +60,10 @@ const Toolbar = ({ onExecute, onReset, onCodeChange }: ToolbarProps) => {
       <Button 
         variant="secondary" 
         className="bg-gray-700 hover:bg-gray-600 text-white"
-        onClick={onReset}
+        onClick={() => {
+          console.log('=== Reset Button Clicked ===');
+          onReset();
+        }}
       >
         <RotateCcw className="w-4 h-4 mr-2" />
         Reset

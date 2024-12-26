@@ -20,30 +20,43 @@ class SimulatorService {
   }
 
   public executeCode(code: string): SimulationResult {
-    console.log('Executing code:', code);
+    console.log('=== SimulatorService: executeCode ===');
+    console.log('Received code:');
+    console.log(code);
+    
     this.consoleOutput = [];
     this.setupConsoleCapture();
 
     try {
-      // Parse and execute in one step
+      console.log('Parsing code...');
       const cleanInstructions = readAsmFile(code);
+      console.log('Clean instructions:', cleanInstructions);
+
+      console.log('Parsing labels and instructions...');
       const [instructions, labels, memory] = parseLabelsAndInstructions(cleanInstructions);
-      
-      // Create and run simulator
+      console.log('Parsed result:');
+      console.log('Instructions:', instructions);
+      console.log('Labels:', labels);
+      console.log('Memory:', memory);
+
+      console.log('Creating simulator...');
       this.simulator = new MIPSSimulator(instructions, labels, memory, false);
+      
+      console.log('Running simulator...');
       this.simulator.run();
 
-      // Get results
       const result = {
         registers: this.simulator.getRegisters(),
         memory: this.simulator.getMemory(),
         output: this.consoleOutput
       };
 
-      console.log('Execution completed:', result);
+      console.log('=== Execution Complete ===');
+      console.log('Final state:', result);
       return result;
     } catch (error) {
-      console.error('Execution error:', error);
+      console.error('=== Execution Failed ===');
+      console.error('Error details:', error);
       throw error;
     }
   }

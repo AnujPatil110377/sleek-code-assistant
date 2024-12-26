@@ -11,18 +11,6 @@ const CodeEditor = ({ code, onChange }: CodeEditorProps) => {
   const resizeTimeoutRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
-<<<<<<< HEAD
-    let resizeTimeout: NodeJS.Timeout;
-    
-    resizeObserverRef.current = new ResizeObserver((entries) => {
-      clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(() => {
-        entries.forEach(() => {
-          if (editorRef.current?.layout) {
-            editorRef.current.layout();
-          }
-        });
-=======
     const handleResize = () => {
       // Clear any existing timeout
       if (resizeTimeoutRef.current) {
@@ -35,7 +23,6 @@ const CodeEditor = ({ code, onChange }: CodeEditorProps) => {
           console.log('Updating editor layout');
           editorRef.current.layout();
         }
->>>>>>> 756bc19a0ad1595816cd09fa188b495198de2898
       }, 100);
     };
 
@@ -44,10 +31,7 @@ const CodeEditor = ({ code, onChange }: CodeEditorProps) => {
       handleResize();
     });
 
-<<<<<<< HEAD
-=======
     // Observe the editor container
->>>>>>> 756bc19a0ad1595816cd09fa188b495198de2898
     const editorContainer = document.querySelector('.editor-container');
     if (editorContainer) {
       resizeObserver.observe(editorContainer);

@@ -1,12 +1,15 @@
 import { useEffect, useRef } from 'react';
 import Editor from '@monaco-editor/react';
+import Toolbar from './Toolbar';
+import RegistersPanel from './RegistersPanel';
 
 interface CodeEditorProps {
   code: string;
   onChange: (value: string | undefined) => void;
+  onRun: () => void;
 }
 
-const CodeEditor = ({ code, onChange }: CodeEditorProps) => {
+const CodeEditor = ({ code, onChange, onRun }: CodeEditorProps) => {
   const editorRef = useRef<any>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
@@ -43,45 +46,31 @@ const CodeEditor = ({ code, onChange }: CodeEditorProps) => {
   };
 
   return (
-    <div className="flex h-full">
-      <div className="editor-container flex-1 h-full bg-background">
-        <Editor
-          height="100%"
-          width="100%"
-          defaultLanguage="mips"
-          value={code}
-          onChange={onChange}
-          theme="vs-dark"
-          options={{
-            minimap: { enabled: false },
-            fontSize: 14,
-            lineNumbers: 'on',
-            roundedSelection: false,
-            scrollBeyondLastLine: false,
-            readOnly: false,
-            automaticLayout: true,
-            padding: { top: 10, bottom: 10 },
-          }}
-          onMount={handleEditorDidMount}
-        />
-      </div>
-      
-      <div className="w-64 bg-muted p-4 border-l border-border">
-        <h3 className="font-semibold mb-4">Registers</h3>
-        <div className="space-y-2">
-          {Array.from({ length: 32 }, (_, i) => (
-            <div key={i} className="flex justify-between items-center">
-              <span className="text-sm font-mono">${i}</span>
-              <span className="text-sm font-mono text-muted-foreground">0x00000000</span>
-            </div>
-          ))}
-          <div className="mt-4 pt-4 border-t border-border">
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-mono">PC</span>
-              <span className="text-sm font-mono text-muted-foreground">0x00000000</span>
-            </div>
-          </div>
+    <div className="flex flex-col h-full">
+      <Toolbar onRun={onRun} />
+      <div className="flex flex-1">
+        <div className="editor-container flex-1 h-full bg-background">
+          <Editor
+            height="100%"
+            width="100%"
+            defaultLanguage="mips"
+            value={code}
+            onChange={onChange}
+            theme="vs-dark"
+            options={{
+              minimap: { enabled: false },
+              fontSize: 14,
+              lineNumbers: 'on',
+              roundedSelection: false,
+              scrollBeyondLastLine: false,
+              readOnly: false,
+              automaticLayout: true,
+              padding: { top: 10, bottom: 10 },
+            }}
+            onMount={handleEditorDidMount}
+          />
         </div>
+        <RegistersPanel />
       </div>
     </div>
   );

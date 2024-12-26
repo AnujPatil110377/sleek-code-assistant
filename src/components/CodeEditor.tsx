@@ -8,45 +8,63 @@ interface CodeEditorProps {
 
 const CodeEditor = ({ code, onChange }: CodeEditorProps) => {
   const editorRef = useRef<any>(null);
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
   useEffect(() => {
-    const handleResize = () => {
-      if (editorRef.current?.layout) {
-        requestAnimationFrame(() => {
-          editorRef.current.layout();
+    let resizeTimeout: NodeJS.Timeout;
+    
+    // Create the resize observer
+    resizeObserverRef.current = new ResizeObserver((entries) => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        entries.forEach(() => {
+          if (editorRef.current?.layout) {
+            editorRef.current.layout();
+          }
         });
-      }
-    };
+      }, 100);
+    });
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    // Start observing the editor container
+    const editorContainer = document.querySelector('.editor-container');
+    if (editorContainer) {
+      resizeObserverRef.current.observe(editorContainer);
+    }
+
+    // Cleanup
+    return () => {
+      if (resizeObserverRef.current) {
+        resizeObserverRef.current.disconnect();
+      }
+      clearTimeout(resizeTimeout);
+    };
   }, []);
 
   const handleEditorDidMount = (editor: any) => {
     editorRef.current = editor;
-    requestAnimationFrame(() => {
-      editor.layout();
-    });
+    editor.layout();
   };
 
   return (
-    <Editor
-      height="calc(100% - 3rem)"
-      defaultLanguage="mips"
-      value={code}
-      onChange={onChange}
-      theme="vs-dark"
-      options={{
-        minimap: { enabled: false },
-        fontSize: 14,
-        lineNumbers: 'on',
-        roundedSelection: false,
-        scrollBeyondLastLine: false,
-        readOnly: false,
-        automaticLayout: true,
-      }}
-      onMount={handleEditorDidMount}
-    />
+    <div className="editor-container h-full">
+      <Editor
+        height="calc(100% - 3rem)"
+        defaultLanguage="mips"
+        value={code}
+        onChange={onChange}
+        theme="vs-dark"
+        options={{
+          minimap: { enabled: false },
+          fontSize: 14,
+          lineNumbers: 'on',
+          roundedSelection: false,
+          scrollBeyondLastLine: false,
+          readOnly: false,
+          automaticLayout: true,
+        }}
+        onMount={handleEditorDidMount}
+      />
+    </div>
   );
 };
 

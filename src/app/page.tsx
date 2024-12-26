@@ -6,7 +6,6 @@ import CodeEditor from '@/components/CodeEditor'
 import ConsoleOutput from '@/components/ConsoleOutput'
 import RegistersViewer from '@/components/RegistersViewer'
 import MemoryViewer from '@/components/MemoryViewer'
-import { ResizableBox, ResizableHandle } from '@/components/ui/resizable'
 
 const Page = () => {
   const [code, setCode] = useState('')
@@ -37,18 +36,12 @@ const Page = () => {
       />
       <div className="flex-1 flex overflow-hidden">
         <div className="flex-1 flex flex-col overflow-hidden">
-          <ResizableBox
-            defaultSize={{ height: '40%' }}
-            minHeight={100}
-            maxHeight="60%"
-            className="w-full"
-            handle={
-              <ResizableHandle className="h-1 w-full cursor-row-resize bg-gray-700 hover:bg-blue-500 transition-colors" />
-            }
-          >
+          <div className="h-[60%]">
             <CodeEditor code={code} onChange={setCode} />
-          </ResizableBox>
-          <ConsoleOutput output={output} />
+          </div>
+          <div className="h-[40%]">
+            <ConsoleOutput output={output} />
+          </div>
         </div>
         <div className="w-[400px] border-l border-gray-700 flex flex-col">
           <div className="h-1/2">

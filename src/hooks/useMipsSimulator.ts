@@ -33,17 +33,23 @@ export function useMipsSimulator() {
 
   const runProgram = useCallback((programContent: string, singleStep: boolean = false) => {
     try {
+      console.log('Running program:', programContent);  // Debug log
+
       setState(prev => ({ 
         ...prev, 
         isRunning: true, 
         error: undefined,
-        outputs: []  // Clear previous outputs
+        outputs: []
       }));
       
       const instructions = readAsmFile(programContent);
-      const [parsedInstructions, labels, memory] = parseLabelsAndInstructions(instructions);
+      console.log('Parsed instructions:', instructions);  // Debug log
 
-      // Create simulator instance
+      const [parsedInstructions, labels, memory] = parseLabelsAndInstructions(instructions);
+      console.log('Processed instructions:', parsedInstructions);  // Debug log
+      console.log('Labels:', labels);  // Debug log
+      console.log('Initial memory:', memory);  // Debug log
+
       const simulator = new MIPSSimulator(
         parsedInstructions, 
         labels, 
@@ -51,11 +57,11 @@ export function useMipsSimulator() {
         singleStep
       );
 
-      // Override simulator's display methods to update state
       simulator.onRegistersUpdate = (registers: RegisterMap) => {
+        console.log('Register update received:', registers);  // Debug log
         setState(prev => ({ 
           ...prev, 
-          registers: { ...registers }  // Make sure to create a new object
+          registers: { ...registers }
         }));
       };
 
@@ -82,6 +88,7 @@ export function useMipsSimulator() {
       }));
 
     } catch (error) {
+      console.error('Error in runProgram:', error);  // Debug log
       setState(prev => ({
         ...prev,
         isRunning: false,

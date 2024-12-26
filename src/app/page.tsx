@@ -26,6 +26,23 @@ const Page = () => {
     runProgram(code, true) // Run in single-step mode
   }
 
+  const runTestProgram = () => {
+    const testProgram = `
+      .text
+      main:
+          li $t0, 42       # Load 42 into $t0
+          li $t1, 10       # Load 10 into $t1
+          add $t2, $t0, $t1  # Add them
+          li $v0, 1        # Print syscall
+          move $a0, $t2    # Move result to $a0
+          syscall          # Print result
+          li $v0, 10       # Exit
+          syscall
+    `;
+    console.log('Running test program');  // Debug log
+    runProgram(testProgram, false);
+  };
+
   // Join all outputs into a single string for ConsoleOutput
   const consoleOutput = outputs
     .map(out => 
@@ -37,6 +54,13 @@ const Page = () => {
 
   return (
     <div className="h-screen flex flex-col">
+      <button
+        onClick={runTestProgram}
+        className="absolute top-4 right-4 px-3 py-1 bg-green-500 text-white rounded"
+      >
+        Run Test Program
+      </button>
+
       <Toolbar 
         onAssemble={handleAssemble}
         onReset={handleReset}

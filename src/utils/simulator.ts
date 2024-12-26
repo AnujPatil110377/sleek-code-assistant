@@ -85,13 +85,18 @@ export class MIPSSimulator {
     const parts = instruction.split(/[,\s()]+/).filter(Boolean);
     const op = parts[0];
 
+    console.log('Executing instruction:', instruction);  // Debug log
+    console.log('Current registers:', this.state.registers);  // Debug log
+
     try {
       switch(op) {
-        case 'li': {  // Load immediate pseudo-instruction
+        case 'li': {
           const rt = getRegisterName(getRegisterNumber(parts[1]));
           const imm = parseInt(parts[2]);
+          console.log(`Loading ${imm} into ${rt}`);  // Debug log
           this.state.registers[rt] = imm;
           this.displayRegisters();
+          console.log('Registers after li:', this.state.registers);  // Debug log
           break;
         }
 
@@ -216,17 +221,19 @@ export class MIPSSimulator {
           return false;
       }
 
-      this.state.registers['zero'] = 0; // Ensure $zero is always 0
+      this.state.registers['zero'] = 0;
       this.displayRegisters();
       return true;
     } catch (error) {
-      console.error(`Error executing instruction "${instruction}":`, error);
+      console.error('Error in executeInstruction:', error);  // Debug log
       return false;
     }
   }
 
   public displayRegisters(): void {
+    console.log('displayRegisters called, registers:', this.state.registers);  // Debug log
     if (this.onRegistersUpdate) {
+      console.log('Calling onRegistersUpdate');  // Debug log
       this.onRegistersUpdate(this.state.registers);
     }
   }

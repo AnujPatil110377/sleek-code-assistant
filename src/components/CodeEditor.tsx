@@ -12,26 +12,27 @@ interface CodeEditorProps {
 const CodeEditor = ({ code, onChange, onRun }: CodeEditorProps) => {
   const editorRef = useRef<any>(null);
   const rafRef = useRef<number>();
-  const isResizing = useRef(false);
+  const lastUpdateRef = useRef<number>(0);
+  const THROTTLE_INTERVAL = 16; // Approximately 60fps
 
   useEffect(() => {
     const editorContainer = document.querySelector('.editor-container');
     if (!editorContainer) return;
 
-    const updateLayout = () => {
-      if (!isResizing.current) return;
-      
-      if (editorRef.current?.layout) {
-        console.log('Updating editor layout');
-        editorRef.current.layout();
+    const updateLayout = (timestamp: number) => {
+      if (timestamp - lastUpdateRef.current >= THROTTLE_INTERVAL) {
+        if (editorRef.current?.layout) {
+          console.log('Updating editor layout');
+          editorRef.current.layout();
+        }
+        lastUpdateRef.current = timestamp;
       }
       
       rafRef.current = requestAnimationFrame(updateLayout);
     };
 
     const resizeObserver = new ResizeObserver(() => {
-      if (!isResizing.current) {
-        isResizing.current = true;
+      if (!rafRef.current) {
         rafRef.current = requestAnimationFrame(updateLayout);
       }
     });
@@ -39,10 +40,10 @@ const CodeEditor = ({ code, onChange, onRun }: CodeEditorProps) => {
     resizeObserver.observe(editorContainer);
 
     return () => {
-      isResizing.current = false;
       resizeObserver.disconnect();
       if (rafRef.current) {
         cancelAnimationFrame(rafRef.current);
+        rafRef.current = undefined;
       }
     };
   }, []);

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
-import { Toolbar } from '@/components/Toolbar'
-import { CodeEditor } from '@/components/CodeEditor'
+import Toolbar from '@/components/Toolbar'
+import CodeEditor from '@/components/CodeEditor'
 
 const Page = () => {
   const [code, setCode] = useState('')

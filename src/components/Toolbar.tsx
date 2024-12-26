@@ -18,8 +18,9 @@ const Toolbar = ({
       const reader = new FileReader()
       reader.onload = (e) => {
         const text = e.target?.result as string
-        // Update the editor content with the file text
-        onCodeChange(text)
+        if (onCodeChange) {
+          onCodeChange(text)
+        }
       }
       reader.readAsText(file)
     }

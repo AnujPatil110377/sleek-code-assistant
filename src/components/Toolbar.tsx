@@ -1,19 +1,25 @@
 import { Button } from "@/components/ui/button"
 import { Upload } from "lucide-react"
 
-const Toolbar = ({ onAssemble, onReset, onStep }: { 
+const Toolbar = ({ 
+  onAssemble, 
+  onReset, 
+  onStep,
+  onCodeChange 
+}: { 
   onAssemble: () => void;
   onReset: () => void;
   onStep: () => void;
+  onCodeChange: (code: string) => void;
 }) => {
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
       const reader = new FileReader()
       reader.onload = (e) => {
-        const text = e.target?.result
-        // Handle the file content here
-        console.log(text)
+        const text = e.target?.result as string
+        // Update the editor content with the file text
+        onCodeChange(text)
       }
       reader.readAsText(file)
     }

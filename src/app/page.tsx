@@ -7,6 +7,7 @@ import ConsoleOutput from '@/components/ConsoleOutput';
 import MemoryViewer from '@/components/MemoryViewer';
 import RegisterViewer from '@/components/RegisterViewer';
 import { simulatorService } from '@/services/simulatorService';
+console.log('Simulator service imported:', !!simulatorService);
 
 export default function Home() {
   const [code, setCode] = useState(`# Test MIPS program

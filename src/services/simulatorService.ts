@@ -8,6 +8,10 @@ interface SimulationResult {
 }
 
 class SimulatorService {
+  constructor() {
+    console.log('SimulatorService instance created');
+  }
+
   private simulator: MIPSSimulator | null = null;
   private consoleOutput: string[] = [];
 
@@ -20,9 +24,15 @@ class SimulatorService {
   }
 
   public executeCode(code: string): SimulationResult {
+    alert('SimulatorService.executeCode called');  // Verify method call
+    console.log('=== SimulatorService: executeCode ===');
+    console.log('Received code:', code?.substring(0, 100));
+
     if (!code) {
-      console.log('❌ NO CODE RECEIVED by simulator service');
-      throw new Error('No code received by simulator service');
+      const error = 'No code received by simulator service';
+      console.error(error);
+      alert(error);
+      throw new Error(error);
     }
 
     console.log('✅ CODE RECEIVED by simulator service:');
@@ -73,4 +83,5 @@ class SimulatorService {
   }
 }
 
-export const simulatorService = new SimulatorService(); 
+export const simulatorService = new SimulatorService();
+console.log('simulatorService exported and ready'); 

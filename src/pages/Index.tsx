@@ -49,6 +49,7 @@ const Index = () => {
         onAssemble={handleAssemble}
         onReset={handleReset}
         onStep={handleStep}
+        onCodeChange={setCode}
       />
 
       <div className="grid grid-cols-[2fr,1fr] gap-4 h-[calc(100vh-8rem)]">

@@ -9,7 +9,7 @@ const MemoryViewer = () => {
   ]
 
   return (
-    <div className="h-[50vh] p-4">
+    <div className="h-[40vh] p-4">
       <div className="bg-gray-800 rounded-lg p-2 h-full">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm font-semibold">Memory</h2>
@@ -18,19 +18,19 @@ const MemoryViewer = () => {
             <button className="text-xs text-gray-400 hover:text-white">Next</button>
           </div>
         </div>
-        <div className="overflow-auto h-[calc(100%-2rem)]">
-          <table className="w-full text-xs font-mono">
+        <div className="overflow-y-auto overflow-x-auto h-[calc(100%-2rem)]">
+          <table className="w-full text-xs font-mono whitespace-nowrap">
             <thead>
               <tr className="bg-gray-700">
-                <th className="text-left p-1">Addr</th>
-                <th className="text-left p-1">Data</th>
+                <th className="text-left p-1 sticky left-0 bg-gray-700">Addr</th>
+                <th className="text-left p-1 min-w-[400px]">Data</th>
                 <th className="text-left p-1">Ascii</th>
               </tr>
             </thead>
             <tbody>
               {memoryData.map((row) => (
                 <tr key={row.address} className="border-b border-gray-700">
-                  <td className="p-1 text-blue-400">{row.address}</td>
+                  <td className="p-1 text-blue-400 sticky left-0 bg-gray-800">{row.address}</td>
                   <td className="p-1">{row.data}</td>
                   <td className="p-1 text-gray-400">{row.ascii}</td>
                 </tr>

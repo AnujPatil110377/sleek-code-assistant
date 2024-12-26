@@ -36,10 +36,10 @@ const Page = () => {
       />
       <div className="flex-1 flex overflow-hidden">
         <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="h-[60%]">
+          <div className="h-[60%] pb-1">
             <CodeEditor code={code} onChange={setCode} />
           </div>
-          <div className="h-[40%]">
+          <div className="h-[40%] pt-1">
             <ConsoleOutput output={output} />
           </div>
         </div>

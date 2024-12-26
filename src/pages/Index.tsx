@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Editor from '@monaco-editor/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,25 +28,32 @@ const Index = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Array<{text: string, isUser: boolean}>>([]);
-  const [editorMounted, setEditorMounted] = useState(false);
+  const editorRef = useRef<any>(null);
 
   useEffect(() => {
-    const handleResize = () => {
-      if (editorMounted) {
-        // Force editor layout update
-        window.dispatchEvent(new Event('resize'));
-      }
+    const debounce = (fn: Function, ms: number) => {
+      let timeoutId: ReturnType<typeof setTimeout>;
+      return function (...args: any[]) {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => fn.apply(null, args), ms);
+      };
     };
+
+    const handleResize = debounce(() => {
+      if (editorRef.current?.layout) {
+        editorRef.current.layout();
+      }
+    }, 100);
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [editorMounted]);
+  }, []);
 
-  const handleEditorDidMount = () => {
-    setEditorMounted(true);
+  const handleEditorDidMount = (editor: any) => {
+    editorRef.current = editor;
     // Initial layout update
     setTimeout(() => {
-      window.dispatchEvent(new Event('resize'));
+      editor.layout();
     }, 100);
   };
 

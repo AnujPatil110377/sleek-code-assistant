@@ -53,7 +53,7 @@ export function parseLabelsAndInstructions(
 
   // Reset for second pass
   dataMode = false;
-  pc = 0;
+  currentAddress = 0x10010000;
 
   // Second pass: process instructions and data
   for (const line of instructions) {
@@ -62,42 +62,40 @@ export function parseLabelsAndInstructions(
       continue;
     } else if (line.startsWith('.text')) {
       dataMode = false;
-      pc = 0;
       continue;
     }
 
     if (dataMode) {
       const colonIndex = line.indexOf(':');
-      let processedLine = line;
-      
       if (colonIndex !== -1) {
-        const label = line.substring(0, colonIndex).trim();
-        labels[label] = currentAddress;
-        processedLine = line.substring(colonIndex + 1).trim();
-      }
-
-      if (processedLine.startsWith('.word')) {
-        const values = processedLine.replace('.word', '')
-          .trim()
-          .split(',')
-          .map(v => parseInt(v.trim()));
-          
-        for (const value of values) {
-          memory[currentAddress] = value;
-          currentAddress += 4;
+        const processedLine = line.substring(colonIndex + 1).trim();
+        
+        if (processedLine.startsWith('.asciiz')) {
+          // Extract the string content
+          const str = processedLine.replace('.asciiz', '')
+            .trim()
+            .replace(/^"/, '')
+            .replace(/"$/, '')
+            .replace(/\\n/g, '\n');  // Handle newlines
+            
+          // Store each character in memory
+          for (const char of str) {
+            memory[currentAddress] = char.charCodeAt(0);
+            currentAddress++;
+          }
+          memory[currentAddress] = 0;  // Null-terminate
+          currentAddress++;
+        } else if (processedLine.startsWith('.word')) {
+          const values = processedLine.replace('.word', '')
+            .trim()
+            .split(',')
+            .map(v => parseInt(v.trim()));
+            
+          for (const value of values) {
+            memory[currentAddress] = value;
+            currentAddress += 4;  // Word-aligned
+          }
         }
-      } else if (processedLine.startsWith('.asciiz')) {
-        const str = processedLine.replace('.asciiz', '')
-          .trim()
-          .replace(/^"/, '')
-          .replace(/"$/, '');
-          
-        for (const char of str) {
-          memory[currentAddress] = char.charCodeAt(0);
-          currentAddress += 1;
-        }
-        memory[currentAddress] = 0;  // Null-terminate
-        currentAddress += 1;
       }
     } else {
       const colonIndex = line.indexOf(':');

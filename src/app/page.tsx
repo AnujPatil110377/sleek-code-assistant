@@ -7,6 +7,7 @@ import ConsoleOutput from '@/components/ConsoleOutput';
 import MemoryViewer from '@/components/MemoryViewer';
 import RegisterViewer from '@/components/RegisterViewer';
 import { simulatorService } from '@/services/simulatorService';
+import { parseProgram } from '@/utils/mipsSimulator';
 
 export default function Home() {
   const [code, setCode] = useState(`# Test MIPS program
@@ -32,6 +33,14 @@ export default function Home() {
       console.log('Current code:', code);
       
       // Try to execute
+      const { instructions, labels, memory } = parseProgram(code);
+      const initialState: SimulatorState = {
+        registers: { 'zero': 0 },
+        memory: memory,  // Use the memory from parser
+        labels: labels,
+        pc: 0,
+        terminated: false
+      };
       const result = simulatorService.executeCode(code);
       
       // Update UI with results

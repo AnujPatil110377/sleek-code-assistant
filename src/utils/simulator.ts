@@ -78,6 +78,7 @@ export class MIPSSimulator {
           const label = parts[2];
           if (label in this.labels) {
             this.state.registers[rt] = this.labels[label];
+            console.log(`Loaded address ${this.labels[label]} for label ${label} into ${rt}`);
           } else {
             throw new Error(`Unknown label: ${label}`);
           }
@@ -186,7 +187,36 @@ export class MIPSSimulator {
         }
 
         case 'syscall': {
-          return this.syscall();
+          const syscallNum = this.state.registers['v0'];
+          
+          switch(syscallNum) {
+            case 1:  // Print integer
+              console.log(`Output (int): ${this.state.registers['a0']}`);
+              break;
+              
+            case 4: {  // Print string
+              const startAddress = this.state.registers['a0'];
+              let currentAddress = startAddress;
+              let outputString = '';
+              
+              // Read string from memory until null terminator
+              while (this.state.memory[currentAddress] !== 0) {
+                outputString += String.fromCharCode(this.state.memory[currentAddress]);
+                currentAddress++;
+              }
+              
+              console.log(`Output (string): ${outputString}`);
+              break;
+            }
+            
+            case 10:  // Exit program
+              console.log('Program exit requested');
+              return false;
+              
+            default:
+              console.log(`Unknown syscall: ${syscallNum}`);
+          }
+          break;
         }
 
         default:

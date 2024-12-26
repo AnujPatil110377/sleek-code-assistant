@@ -32,22 +32,48 @@ const Index = () => {
   const handleExecute = () => {
     try {
       console.log('Assembling code:', code);
+      // First parse the code
       const { instructions, labels } = parseProgram(code);
-      setSimulatorState(prev => ({
+      
+      // Initialize simulator state
+      const initialState = {
         ...createInitialState(),
-        labels
-      }));
-      setOutput('Program assembled successfully');
+        labels,
+        instructions  // Store parsed instructions
+      };
+      setSimulatorState(initialState);
+
+      console.log('Executing program...');
+      // Execute all instructions
+      let currentState = initialState;
+      while (currentState.pc < instructions.length * 4) {  // Each instruction is 4 bytes
+        const currentInstruction = instructions[currentState.pc / 4];
+        console.log('Executing instruction:', currentInstruction);
+        
+        // Execute the instruction and get new state
+        currentState = executeInstruction(currentState, currentInstruction);
+        
+        // Update simulator state
+        setSimulatorState(currentState);
+        
+        // Check for program termination (e.g., syscall exit)
+        if (currentState.terminated) {
+          break;
+        }
+      }
+
+      setOutput('Program executed successfully');
       toast({
         title: "Success",
-        description: "Program assembled successfully",
+        description: "Program executed successfully",
       });
+
     } catch (error) {
-      console.error('Assembly error:', error);
-      setOutput(`Assembly error: ${error}`);
+      console.error('Execution error:', error);
+      setOutput(`Execution error: ${error}`);
       toast({
         title: "Error",
-        description: `Assembly error: ${error}`,
+        description: `Execution error: ${error}`,
         variant: "destructive",
       });
     }
@@ -57,6 +83,7 @@ const Index = () => {
     try {
       const { instructions } = parseProgram(code);
       const currentInstruction = instructions[simulatorState.pc / 4];
+      console.log('Current instruction:', currentInstruction);
       if (currentInstruction) {
         const newState = executeInstruction(simulatorState, currentInstruction);
         setSimulatorState(newState);

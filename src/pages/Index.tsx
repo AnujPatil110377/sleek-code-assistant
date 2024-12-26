@@ -24,7 +24,12 @@ const Index = () => {
   const [isRunning, setIsRunning] = useState(false);
   const { toast } = useToast();
 
-  const handleAssemble = () => {
+  useEffect(() => {
+    console.log('=== Code Changed ===');
+    console.log(code);
+  }, [code]);
+
+  const handleExecute = () => {
     try {
       console.log('Assembling code:', code);
       const { instructions, labels } = parseProgram(code);
@@ -134,10 +139,10 @@ const Index = () => {
       </nav>
 
       <Toolbar 
-        onAssemble={handleAssemble}
+        onExecute={handleExecute}
         onReset={handleReset}
-        onStep={handleStep}
         onCodeChange={setCode}
+        isAssembled={true}
       />
 
       <div className="grid grid-cols-[2fr,1fr] gap-4 h-[calc(100vh-8rem)]">

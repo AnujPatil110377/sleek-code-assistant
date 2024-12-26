@@ -1,16 +1,44 @@
 import { Button } from "@/components/ui/button"
+import { Upload } from "lucide-react"
 
 const Toolbar = ({ onAssemble, onReset, onStep }: { 
   onAssemble: () => void;
   onReset: () => void;
   onStep: () => void;
 }) => {
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const text = e.target?.result
+        // Handle the file content here
+        console.log(text)
+      }
+      reader.readAsText(file)
+    }
+  }
+
   return (
     <div className="bg-[#1e1e1e] border-b border-gray-700 p-2 flex items-center justify-between">
       <div className="flex items-center space-x-2">
-        <Button variant="ghost" className="text-gray-300 hover:text-white hover:bg-[#2d2d2d]">
-          File
-        </Button>
+        <div className="relative">
+          <input
+            type="file"
+            id="file-upload"
+            className="hidden"
+            accept=".txt"
+            onChange={handleFileUpload}
+          />
+          <Button 
+            variant="ghost" 
+            className="text-gray-300 hover:text-white hover:bg-[#2d2d2d] flex items-center gap-2"
+            onClick={() => document.getElementById('file-upload')?.click()}
+          >
+            <Upload size={16} />
+            Upload File
+          </Button>
+        </div>
         <div className="h-4 w-px bg-gray-700" />
         <Button 
           variant="secondary" 
@@ -27,9 +55,7 @@ const Toolbar = ({ onAssemble, onReset, onStep }: {
           Reset
         </Button>
       </div>
-      <div className="flex items-center space-x-2">
-        <span className="text-xs text-gray-400">Time Limit: 1000 ms</span>
-      </div>
+      <div className="flex items-center space-x-2" />
     </div>
   )
 }

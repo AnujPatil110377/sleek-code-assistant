@@ -20,9 +20,15 @@ class SimulatorService {
   }
 
   public executeCode(code: string): SimulationResult {
-    console.log('=== SimulatorService: executeCode ===');
-    console.log('Received code:');
-    console.log(code);
+    if (!code) {
+      console.log('❌ NO CODE RECEIVED by simulator service');
+      throw new Error('No code received by simulator service');
+    }
+
+    console.log('✅ CODE RECEIVED by simulator service:');
+    console.log('Length:', code.length);
+    console.log('First few lines:');
+    console.log(code.split('\n').slice(0, 3).join('\n'));
     
     this.consoleOutput = [];
     this.setupConsoleCapture();

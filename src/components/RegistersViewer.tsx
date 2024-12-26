@@ -34,25 +34,51 @@ const RegistersViewer = () => {
     { name: '$ra', value: 0 },
   ]
 
+  // Split registers into two halves
+  const midPoint = Math.ceil(registers.length / 2);
+  const leftRegisters = registers.slice(0, midPoint);
+  const rightRegisters = registers.slice(midPoint);
+
   return (
     <div className="h-full p-4">
       <h2 className="text-sm font-semibold mb-2">Registers</h2>
-      <table className="w-full text-xs">
-        <thead>
-          <tr className="bg-gray-800">
-            <th className="text-left p-1">Register</th>
-            <th className="text-left p-1">Value</th>
-          </tr>
-        </thead>
-        <tbody>
-          {registers.map((reg) => (
-            <tr key={reg.name} className="border-b border-gray-800">
-              <td className="p-1 font-mono">{reg.name}</td>
-              <td className="p-1 font-mono text-teal-400">{reg.value}</td>
+      <div className="flex gap-4">
+        {/* Left half */}
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="bg-gray-800">
+              <th className="text-left p-1">Register</th>
+              <th className="text-left p-1">Value</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {leftRegisters.map((reg) => (
+              <tr key={reg.name} className="border-b border-gray-800">
+                <td className="p-1 font-mono">{reg.name}</td>
+                <td className="p-1 font-mono text-teal-400">{reg.value}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* Right half */}
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="bg-gray-800">
+              <th className="text-left p-1">Register</th>
+              <th className="text-left p-1">Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rightRegisters.map((reg) => (
+              <tr key={reg.name} className="border-b border-gray-800">
+                <td className="p-1 font-mono">{reg.name}</td>
+                <td className="p-1 font-mono text-teal-400">{reg.value}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }

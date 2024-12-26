@@ -8,7 +8,7 @@ const ResizablePanel = ResizablePrimitive.Panel
 const ResizableHandle = ({
   className,
   ...props
-}: React.HTMLAttributes<HTMLDivElement>) => (
+}: React.ComponentProps<typeof ResizablePrimitive.PanelResizeHandle>) => (
   <ResizablePrimitive.PanelResizeHandle
     className={className}
     {...props}

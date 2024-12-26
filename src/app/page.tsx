@@ -23,7 +23,6 @@ main:
   const [memory, setMemory] = useState<{[address: number]: number}>({});
   const [registers, setRegisters] = useState<{[key: string]: number}>({});
 
-  // Add logging for code changes
   useEffect(() => {
     console.log('=== Code Changed ===');
     console.log(code);
@@ -72,6 +71,7 @@ main:
         onExecute={handleExecute}
         onReset={handleReset}
         onCodeChange={setCode}
+        isAssembled={true}
       />
       <div className="grid grid-cols-2 gap-4 p-4">
         <div>

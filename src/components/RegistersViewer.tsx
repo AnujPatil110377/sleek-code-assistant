@@ -1,43 +1,34 @@
-const RegistersViewer = () => {
-  const registers = [
-    { name: '$zero', value: 0 },
-    { name: '$at', value: 0 },
-    { name: '$v0', value: 0 },
-    { name: '$v1', value: 0 },
-    { name: '$a0', value: 0 },
-    { name: '$a1', value: 0 },
-    { name: '$a2', value: 0 },
-    { name: '$a3', value: 0 },
-    { name: '$t0', value: 0 },
-    { name: '$t1', value: 0 },
-    { name: '$t2', value: 0 },
-    { name: '$t3', value: 0 },
-    { name: '$t4', value: 0 },
-    { name: '$t5', value: 0 },
-    { name: '$t6', value: 0 },
-    { name: '$t7', value: 0 },
-    { name: '$s0', value: 0 },
-    { name: '$s1', value: 0 },
-    { name: '$s2', value: 0 },
-    { name: '$s3', value: 0 },
-    { name: '$s4', value: 0 },
-    { name: '$s5', value: 0 },
-    { name: '$s6', value: 0 },
-    { name: '$s7', value: 0 },
-    { name: '$t8', value: 0 },
-    { name: '$t9', value: 0 },
-    { name: '$k0', value: 0 },
-    { name: '$k1', value: 0 },
-    { name: '$gp', value: 0 },
-    { name: '$sp', value: 0 },
-    { name: '$fp', value: 0 },
-    { name: '$ra', value: 0 },
-  ]
+import { useState } from 'react';
+import { Input } from '@/components/ui/input';
 
-  // Split registers into two halves
-  const midPoint = Math.ceil(registers.length / 2);
-  const leftRegisters = registers.slice(0, midPoint);
-  const rightRegisters = registers.slice(midPoint);
+interface RegistersViewerProps {
+  registers: { [key: string]: number };
+  onRegisterChange?: (name: string, value: number) => void;
+}
+
+const RegistersViewer = ({ registers, onRegisterChange }: RegistersViewerProps) => {
+  const [editingRegister, setEditingRegister] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState("");
+
+  const handleEdit = (name: string) => {
+    setEditingRegister(name);
+    setEditValue(registers[name].toString());
+  };
+
+  const handleSave = (name: string) => {
+    if (onRegisterChange) {
+      const newValue = parseInt(editValue);
+      if (!isNaN(newValue)) {
+        onRegisterChange(name, newValue);
+      }
+    }
+    setEditingRegister(null);
+  };
+
+  const registersList = Object.entries(registers);
+  const midPoint = Math.ceil(registersList.length / 2);
+  const leftRegisters = registersList.slice(0, midPoint);
+  const rightRegisters = registersList.slice(midPoint);
 
   return (
     <div className="h-full p-4">
@@ -52,10 +43,33 @@ const RegistersViewer = () => {
             </tr>
           </thead>
           <tbody>
-            {leftRegisters.map((reg) => (
-              <tr key={reg.name} className="border-b border-gray-800">
-                <td className="p-1 font-mono">{reg.name}</td>
-                <td className="p-1 font-mono text-teal-400">{reg.value}</td>
+            {leftRegisters.map(([name, value]) => (
+              <tr key={name} className="border-b border-gray-800">
+                <td className="p-1 font-mono">${name}</td>
+                <td className="p-1 font-mono">
+                  {editingRegister === name ? (
+                    <div className="flex items-center gap-1">
+                      <Input
+                        value={editValue}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        className="w-20 h-6 py-0 px-1"
+                      />
+                      <button
+                        onClick={() => handleSave(name)}
+                        className="text-xs text-blue-400 hover:text-blue-300"
+                      >
+                        Save
+                      </button>
+                    </div>
+                  ) : (
+                    <span
+                      className="text-teal-400 cursor-pointer hover:text-teal-300"
+                      onClick={() => handleEdit(name)}
+                    >
+                      {value}
+                    </span>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -70,17 +84,40 @@ const RegistersViewer = () => {
             </tr>
           </thead>
           <tbody>
-            {rightRegisters.map((reg) => (
-              <tr key={reg.name} className="border-b border-gray-800">
-                <td className="p-1 font-mono">{reg.name}</td>
-                <td className="p-1 font-mono text-teal-400">{reg.value}</td>
+            {rightRegisters.map(([name, value]) => (
+              <tr key={name} className="border-b border-gray-800">
+                <td className="p-1 font-mono">${name}</td>
+                <td className="p-1 font-mono">
+                  {editingRegister === name ? (
+                    <div className="flex items-center gap-1">
+                      <Input
+                        value={editValue}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        className="w-20 h-6 py-0 px-1"
+                      />
+                      <button
+                        onClick={() => handleSave(name)}
+                        className="text-xs text-blue-400 hover:text-blue-300"
+                      >
+                        Save
+                      </button>
+                    </div>
+                  ) : (
+                    <span
+                      className="text-teal-400 cursor-pointer hover:text-teal-300"
+                      onClick={() => handleEdit(name)}
+                    >
+                      {value}
+                    </span>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
     </div>
-  )
-}
+  );
+};
 
 export default RegistersViewer;

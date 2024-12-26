@@ -1,12 +1,38 @@
-const MemoryViewer = () => {
-  const memoryData = [
-    { address: '10000000', data: '48 65 6c 6c 6f 2c 20 77 6f 72 6c 64 21 20 54 68', ascii: 'Hello, world! ThE PUSSY OF THE WORLD' },
-    { address: '10000010', data: '69 73 20 73 74 72 69 6e 67 20 69 73 20 66 72 6f', ascii: 'is string is fro' },
-    { address: '10000020', data: '6d 20 4d 49 50 53 21 0a 00 00 00 00 20 00 00 00', ascii: 'm MIPS!....    .' },
-    { address: '10000030', data: '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00', ascii: '................' },
-    { address: '10000040', data: '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00', ascii: '................' },
-    { address: '10000050', data: '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00', ascii: '................' },
-  ]
+import { useState } from 'react';
+import { Input } from '@/components/ui/input';
+
+interface MemoryViewerProps {
+  memory: { [address: number]: number };
+  onMemoryChange?: (address: number, value: number) => void;
+}
+
+const MemoryViewer = ({ memory, onMemoryChange }: MemoryViewerProps) => {
+  const [editingAddress, setEditingAddress] = useState<number | null>(null);
+  const [editValue, setEditValue] = useState("");
+  const [startAddress, setStartAddress] = useState(0x10010000);
+
+  const handleEdit = (address: number) => {
+    setEditingAddress(address);
+    setEditValue(memory[address]?.toString() || "0");
+  };
+
+  const handleSave = (address: number) => {
+    if (onMemoryChange) {
+      const newValue = parseInt(editValue);
+      if (!isNaN(newValue)) {
+        onMemoryChange(address, newValue);
+      }
+    }
+    setEditingAddress(null);
+  };
+
+  const addresses = Object.keys(memory)
+    .map(Number)
+    .sort((a, b) => a - b);
+
+  const displayableAddresses = addresses.filter(
+    addr => addr >= startAddress && addr < startAddress + 256
+  );
 
   return (
     <div className="h-[40vh] p-4">
@@ -14,8 +40,18 @@ const MemoryViewer = () => {
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm font-semibold">Memory</h2>
           <div className="flex space-x-2">
-            <button className="text-xs text-gray-400 hover:text-white">Previous</button>
-            <button className="text-xs text-gray-400 hover:text-white">Next</button>
+            <button
+              className="text-xs text-gray-400 hover:text-white"
+              onClick={() => setStartAddress(Math.max(0, startAddress - 64))}
+            >
+              Previous
+            </button>
+            <button
+              className="text-xs text-gray-400 hover:text-white"
+              onClick={() => setStartAddress(startAddress + 64)}
+            >
+              Next
+            </button>
           </div>
         </div>
         <div className="overflow-y-auto overflow-x-auto h-[calc(100%-2rem)]">
@@ -23,16 +59,45 @@ const MemoryViewer = () => {
             <thead>
               <tr className="bg-gray-700">
                 <th className="text-left p-1 sticky left-0 bg-gray-700 w-[100px]">Addr</th>
-                <th className="text-left p-1 w-[250px]">Data</th>
-                <th className="text-left p-1 w-[150px]">Ascii</th>
+                <th className="text-left p-1 w-[250px]">Value</th>
+                <th className="text-left p-1 w-[150px]">ASCII</th>
               </tr>
             </thead>
             <tbody>
-              {memoryData.map((row) => (
-                <tr key={row.address} className="border-b border-gray-700">
-                  <td className="p-1 text-blue-400 sticky left-0 bg-gray-800">{row.address}</td>
-                  <td className="p-1">{row.data}</td>
-                  <td className="p-1 text-gray-400">{row.ascii}</td>
+              {displayableAddresses.map((address) => (
+                <tr key={address} className="border-b border-gray-700">
+                  <td className="p-1 text-blue-400 sticky left-0 bg-gray-800">
+                    {address.toString(16).padStart(8, '0')}
+                  </td>
+                  <td className="p-1">
+                    {editingAddress === address ? (
+                      <div className="flex items-center gap-1">
+                        <Input
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          className="w-20 h-6 py-0 px-1"
+                        />
+                        <button
+                          onClick={() => handleSave(address)}
+                          className="text-xs text-blue-400 hover:text-blue-300"
+                        >
+                          Save
+                        </button>
+                      </div>
+                    ) : (
+                      <span
+                        className="cursor-pointer hover:text-blue-300"
+                        onClick={() => handleEdit(address)}
+                      >
+                        {memory[address]?.toString(16).padStart(2, '0') || '00'}
+                      </span>
+                    )}
+                  </td>
+                  <td className="p-1 text-gray-400">
+                    {memory[address] >= 32 && memory[address] <= 126
+                      ? String.fromCharCode(memory[address])
+                      : '.'}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -40,7 +105,7 @@ const MemoryViewer = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 export default MemoryViewer;

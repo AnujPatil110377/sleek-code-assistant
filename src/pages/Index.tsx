@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import CodeEditor from '@/components/CodeEditor';
 import ConsoleOutput from '@/components/ConsoleOutput';
 import MemoryViewer from '@/components/MemoryViewer';
 import RegistersViewer from '@/components/RegistersViewer';
 import Toolbar from '@/components/Toolbar';
+import { createInitialState, parseProgram, executeInstruction, SimulatorState, saveState, loadState } from '@/utils/mipsSimulator';
+import { useToast } from '@/components/ui/use-toast';
 
 const initialCode = `.data
     hello: .asciiz "Hello, world! This string is from MIPS!\\n"
@@ -13,36 +15,122 @@ const initialCode = `.data
     # Print the string
     addi $v0, $zero, 4
     la $a0, hello
-    syscall
-
-    # Print numbers 0 to 4
-    addi $s0, $zero, 0
-loop:
-    sltiu $t0, $s0, 10
-    beq $t0, $zero, end`;
+    syscall`;
 
 const Index = () => {
   const [code, setCode] = useState(initialCode);
-  const [output, setOutput] = useState('Hello, world! This string is from MIPS!\n0 1 2 3 4');
+  const [output, setOutput] = useState('');
+  const [simulatorState, setSimulatorState] = useState<SimulatorState>(createInitialState());
+  const [isRunning, setIsRunning] = useState(false);
+  const { toast } = useToast();
 
   const handleAssemble = () => {
-    console.log('Assembling code:', code);
+    try {
+      console.log('Assembling code:', code);
+      const { instructions, labels } = parseProgram(code);
+      setSimulatorState(prev => ({
+        ...createInitialState(),
+        labels
+      }));
+      setOutput('Program assembled successfully');
+      toast({
+        title: "Success",
+        description: "Program assembled successfully",
+      });
+    } catch (error) {
+      console.error('Assembly error:', error);
+      setOutput(`Assembly error: ${error}`);
+      toast({
+        title: "Error",
+        description: `Assembly error: ${error}`,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleStep = () => {
+    try {
+      const { instructions } = parseProgram(code);
+      const currentInstruction = instructions[simulatorState.pc / 4];
+      if (currentInstruction) {
+        const newState = executeInstruction(simulatorState, currentInstruction);
+        setSimulatorState(newState);
+        setOutput(prev => `${prev}\nExecuted: ${currentInstruction}`);
+      } else {
+        setIsRunning(false);
+        setOutput(prev => `${prev}\nProgram completed`);
+      }
+    } catch (error) {
+      console.error('Execution error:', error);
+      setIsRunning(false);
+      setOutput(`Execution error: ${error}`);
+    }
   };
 
   const handleReset = () => {
     console.log('Resetting simulator');
-    setCode(initialCode);
+    setSimulatorState(createInitialState());
     setOutput('');
+    setIsRunning(false);
   };
 
-  const handleStep = () => {
-    console.log('Stepping through code');
+  const handleSaveState = () => {
+    try {
+      const saved = saveState(simulatorState);
+      localStorage.setItem('mips_state', saved);
+      toast({
+        title: "Success",
+        description: "State saved successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save state",
+        variant: "destructive",
+      });
+    }
   };
+
+  const handleLoadState = () => {
+    try {
+      const saved = localStorage.getItem('mips_state');
+      if (saved) {
+        const loadedState = loadState(saved);
+        setSimulatorState(loadedState);
+        toast({
+          title: "Success",
+          description: "State loaded successfully",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load state",
+        variant: "destructive",
+      });
+    }
+  };
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isRunning) {
+      interval = setInterval(handleStep, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isRunning, simulatorState]);
 
   return (
     <div className="min-h-screen bg-background">
       <nav className="h-16 border-b flex items-center justify-between px-4">
-        <h1 className="text-xl font-semibold">MIPS Code Editor</h1>
+        <h1 className="text-xl font-semibold">MIPS Simulator</h1>
+        <div className="flex gap-2">
+          <button onClick={handleSaveState} className="px-3 py-1 bg-blue-500 text-white rounded">
+            Save State
+          </button>
+          <button onClick={handleLoadState} className="px-3 py-1 bg-green-500 text-white rounded">
+            Load State
+          </button>
+        </div>
       </nav>
 
       <Toolbar 
@@ -59,9 +147,9 @@ const Index = () => {
         </div>
         <div className="flex flex-col">
           <div className="flex-1 overflow-auto">
-            <RegistersViewer />
+            <RegistersViewer registers={simulatorState.registers} />
           </div>
-          <MemoryViewer />
+          <MemoryViewer memory={simulatorState.memory} />
         </div>
       </div>
     </div>

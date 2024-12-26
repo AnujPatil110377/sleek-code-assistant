@@ -91,6 +91,7 @@ export class MIPSSimulator {
           const rt = getRegisterName(getRegisterNumber(parts[1]));
           const imm = parseInt(parts[2]);
           this.state.registers[rt] = imm;
+          this.displayRegisters();
           break;
         }
 
@@ -216,6 +217,7 @@ export class MIPSSimulator {
       }
 
       this.state.registers['zero'] = 0; // Ensure $zero is always 0
+      this.displayRegisters();
       return true;
     } catch (error) {
       console.error(`Error executing instruction "${instruction}":`, error);

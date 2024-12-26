@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { RegisterMap, Labels, Memory } from '../types/mips';
 import { MIPSSimulator } from '../utils/simulator';
 import { readAsmFile, parseLabelsAndInstructions } from '../utils/parser';
+import { registerMap } from '../utils/registers';
 
 interface SimulatorOutput {
   type: 'int' | 'string';
@@ -16,9 +17,15 @@ interface SimulatorState {
   error?: string;
 }
 
+// Initialize registers with default values
+const initialRegisters: RegisterMap = Object.fromEntries(
+  Object.keys(registerMap).map(reg => [reg, 0])
+);
+initialRegisters['sp'] = 0x7FFFFFFC;  // Initialize stack pointer
+
 export function useMipsSimulator() {
   const [state, setState] = useState<SimulatorState>({
-    registers: {},
+    registers: initialRegisters,  // Use initialized registers
     memory: {},
     outputs: [],
     isRunning: false
@@ -26,27 +33,15 @@ export function useMipsSimulator() {
 
   const runProgram = useCallback((programContent: string, singleStep: boolean = false) => {
     try {
-      setState(prev => ({ ...prev, isRunning: true, error: undefined }));
+      setState(prev => ({ 
+        ...prev, 
+        isRunning: true, 
+        error: undefined,
+        outputs: []  // Clear previous outputs
+      }));
       
       const instructions = readAsmFile(programContent);
       const [parsedInstructions, labels, memory] = parseLabelsAndInstructions(instructions);
-
-      // Override console.log to capture outputs
-      const outputs: SimulatorOutput[] = [];
-      const originalLog = console.log;
-      console.log = (msg: string) => {
-        if (msg.startsWith('Output (int): ')) {
-          outputs.push({
-            type: 'int',
-            value: parseInt(msg.replace('Output (int): ', ''))
-          });
-        } else if (msg.startsWith('Output (string): ')) {
-          outputs.push({
-            type: 'string',
-            value: msg.replace('Output (string): ', '')
-          });
-        }
-      };
 
       // Create simulator instance
       const simulator = new MIPSSimulator(
@@ -58,11 +53,17 @@ export function useMipsSimulator() {
 
       // Override simulator's display methods to update state
       simulator.onRegistersUpdate = (registers: RegisterMap) => {
-        setState(prev => ({ ...prev, registers }));
+        setState(prev => ({ 
+          ...prev, 
+          registers: { ...registers }  // Make sure to create a new object
+        }));
       };
 
       simulator.onMemoryUpdate = (memory: Memory) => {
-        setState(prev => ({ ...prev, memory }));
+        setState(prev => ({ 
+          ...prev, 
+          memory: { ...memory }  // Make sure to create a new object
+        }));
       };
 
       simulator.onOutput = (output: SimulatorOutput) => {
@@ -75,13 +76,9 @@ export function useMipsSimulator() {
       // Run the program
       simulator.run();
 
-      // Restore console.log
-      console.log = originalLog;
-
       setState(prev => ({
         ...prev,
-        isRunning: false,
-        outputs
+        isRunning: false
       }));
 
     } catch (error) {
@@ -93,8 +90,19 @@ export function useMipsSimulator() {
     }
   }, []);
 
+  const resetSimulator = useCallback(() => {
+    setState({
+      registers: initialRegisters,
+      memory: {},
+      outputs: [],
+      isRunning: false,
+      error: undefined
+    });
+  }, []);
+
   return {
     ...state,
-    runProgram
+    runProgram,
+    resetSimulator
   };
 } 

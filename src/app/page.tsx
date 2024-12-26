@@ -11,15 +11,15 @@ import { useMipsSimulator } from '@/hooks/useMipsSimulator'
 
 const Page = () => {
   const [code, setCode] = useState('')
-  const { runProgram, registers, memory, outputs, isRunning, error } = useMipsSimulator()
+  const { runProgram, resetSimulator, registers, memory, outputs, isRunning, error } = useMipsSimulator()
 
   const handleAssemble = () => {
-    runProgram(code, false) // Run the program normally
+    runProgram(code, false)
   }
 
   const handleReset = () => {
     setCode('')
-    // Reset simulator state will be handled by useMipsSimulator
+    resetSimulator()
   }
 
   const handleStep = () => {

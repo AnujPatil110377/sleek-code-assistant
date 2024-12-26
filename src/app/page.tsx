@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import CodeEditor from '@/components/CodeEditor';
 import Toolbar from '@/components/Toolbar';
 import ConsoleOutput from '@/components/ConsoleOutput';
@@ -15,15 +15,35 @@ export default function Home() {
   const [registers, setRegisters] = useState<{[key: string]: number}>({});
 
   const handleAssemble = () => {
+    console.log('Running code:', code);
+    
     try {
       const result = simulatorService.assembleAndRun(code);
+      console.log('Simulation result:', result);
+      
       setRegisters(result.registers);
       setMemory(result.memory);
       setOutput(result.output.join('\n'));
     } catch (error) {
+      console.error('Simulation error:', error);
       setOutput(`Error: ${error.message}`);
     }
   };
+
+  useEffect(() => {
+    setCode(`# Test MIPS program
+.data
+message: .asciiz "Hello, World!\\n"
+
+.text
+main:
+    li $v0, 4           # syscall 4 (print_str)
+    la $a0, message     # argument: string
+    syscall
+    
+    li $v0, 10          # syscall 10 (exit)
+    syscall`);
+  }, []);
 
   const handleReset = () => {
     simulatorService.reset();
@@ -40,7 +60,7 @@ export default function Home() {
         onStep={() => {}}
         onCodeChange={setCode}
       />
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4 p-4">
         <div>
           <CodeEditor code={code} onChange={setCode} />
         </div>

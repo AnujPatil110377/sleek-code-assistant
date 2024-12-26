@@ -21,12 +21,16 @@ class SimulatorService {
   }
 
   public assembleAndRun(code: string): SimulationResult {
+    console.log('SimulatorService: Starting assembly and run');
     this.consoleOutput = [];
     this.setupConsoleCapture();
 
     // Parse the code
     const cleanInstructions = readAsmFile(code);
+    console.log('Cleaned instructions:', cleanInstructions);
+
     const [instructions, labels, memory] = parseLabelsAndInstructions(cleanInstructions);
+    console.log('Parsed result:', { instructions, labels, memory });
 
     // Create and run simulator
     this.simulator = new MIPSSimulator(instructions, labels, memory, false);

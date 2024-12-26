@@ -50,7 +50,10 @@ const Toolbar = ({
         <Button 
           variant="secondary" 
           className="bg-blue-600 hover:bg-blue-700 text-white"
-          onClick={onAssemble}
+          onClick={() => {
+            console.log('Run button clicked');
+            onAssemble();
+          }}
         >
           Run
         </Button>

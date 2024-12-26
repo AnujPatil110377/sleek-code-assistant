@@ -7,8 +7,6 @@ interface RegistersViewerProps {
 }
 
 const RegistersViewer = ({ registers, onRegisterChange }: RegistersViewerProps) => {
-  console.log('RegistersViewer received registers:', registers);
-
   const [editingRegister, setEditingRegister] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
 

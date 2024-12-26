@@ -13,10 +13,6 @@ export class MIPSSimulator {
   private instructions: string[];
   private singleStep: boolean;
 
-  public onRegistersUpdate?: (registers: RegisterMap) => void;
-  public onMemoryUpdate?: (memory: Memory) => void;
-  public onOutput?: (output: SimulatorOutput) => void;
-
   constructor(instructions: string[], labels: Labels, memory: Memory, singleStep: boolean = false) {
     this.instructions = instructions;
     this.labels = labels;
@@ -39,43 +35,26 @@ export class MIPSSimulator {
     const syscallNum = this.state.registers['v0'];
     
     switch(syscallNum) {
-      case 1: {  // Print integer
-        const output = {
-          type: 'int' as const,
-          value: this.state.registers['a0']
-        };
-        if (this.onOutput) {
-          this.onOutput(output);
-        }
+      case 1:  // Print integer
+        console.log(`Output (int): ${this.state.registers['a0']}`);
         break;
-      }
-      
-      case 4: {  // Print string
+        
+      case 4:  // Print string
         let output = '';
         let address = this.state.registers['a0'];
         while (this.state.memory[address] !== 0) {
           output += String.fromCharCode(this.state.memory[address]);
           address++;
         }
-        if (this.onOutput) {
-          this.onOutput({
-            type: 'string',
-            value: output
-          });
-        }
+        console.log(`Output (string): ${output}`);
         break;
-      }
-      
+        
       case 10:  // Exit program
+        console.log('Program exit requested');
         return false;
         
       default:
-        if (this.onOutput) {
-          this.onOutput({
-            type: 'string',
-            value: `Unknown syscall: ${syscallNum}`
-          });
-        }
+        console.log(`Unknown syscall: ${syscallNum}`);
     }
     
     return true;
@@ -85,17 +64,12 @@ export class MIPSSimulator {
     const parts = instruction.split(/[,\s()]+/).filter(Boolean);
     const op = parts[0];
 
-    console.log('Executing instruction:', instruction);
-    console.log('Current registers:', this.state.registers);
-
     try {
       switch(op) {
-        case 'li': {
+        case 'li': {  // Load immediate pseudo-instruction
           const rt = getRegisterName(getRegisterNumber(parts[1]));
           const imm = parseInt(parts[2]);
-          console.log(`Loading ${imm} into ${rt}`);
           this.state.registers[rt] = imm;
-          this.displayRegisters();
           break;
         }
 
@@ -146,63 +120,7 @@ export class MIPSSimulator {
           const rt = getRegisterName(getRegisterNumber(parts[1]));
           const rs = getRegisterName(getRegisterNumber(parts[2]));
           const imm = parseInt(parts[3]);
-          console.log(`ADDI: ${rt} = ${rs} + ${imm}`);
           this.state.registers[rt] = this.state.registers[rs] + imm;
-          this.displayRegisters();
-          break;
-        }
-
-        case 'addiu': {  // Unsigned add immediate
-          const rt = getRegisterName(getRegisterNumber(parts[1]));
-          const rs = getRegisterName(getRegisterNumber(parts[2]));
-          const imm = parseInt(parts[3]) >>> 0;  // Convert to unsigned
-          this.state.registers[rt] = (this.state.registers[rs] + imm) >>> 0;
-          this.displayRegisters();
-          break;
-        }
-
-        case 'andi': {  // And immediate
-          const rt = getRegisterName(getRegisterNumber(parts[1]));
-          const rs = getRegisterName(getRegisterNumber(parts[2]));
-          const imm = parseInt(parts[3]);
-          this.state.registers[rt] = this.state.registers[rs] & imm;
-          this.displayRegisters();
-          break;
-        }
-
-        case 'ori': {  // Or immediate
-          const rt = getRegisterName(getRegisterNumber(parts[1]));
-          const rs = getRegisterName(getRegisterNumber(parts[2]));
-          const imm = parseInt(parts[3]);
-          this.state.registers[rt] = this.state.registers[rs] | imm;
-          this.displayRegisters();
-          break;
-        }
-
-        case 'xori': {  // Xor immediate
-          const rt = getRegisterName(getRegisterNumber(parts[1]));
-          const rs = getRegisterName(getRegisterNumber(parts[2]));
-          const imm = parseInt(parts[3]);
-          this.state.registers[rt] = this.state.registers[rs] ^ imm;
-          this.displayRegisters();
-          break;
-        }
-
-        case 'slti': {  // Set less than immediate
-          const rt = getRegisterName(getRegisterNumber(parts[1]));
-          const rs = getRegisterName(getRegisterNumber(parts[2]));
-          const imm = parseInt(parts[3]);
-          this.state.registers[rt] = this.state.registers[rs] < imm ? 1 : 0;
-          this.displayRegisters();
-          break;
-        }
-
-        case 'sltiu': {  // Set less than immediate unsigned
-          const rt = getRegisterName(getRegisterNumber(parts[1]));
-          const rs = getRegisterName(getRegisterNumber(parts[2]));
-          const imm = parseInt(parts[3]) >>> 0;
-          this.state.registers[rt] = (this.state.registers[rs] >>> 0) < imm ? 1 : 0;
-          this.displayRegisters();
           break;
         }
 
@@ -271,59 +189,43 @@ export class MIPSSimulator {
           return this.syscall();
         }
 
-        case 'sll': {  // Shift left logical
-          const rd = getRegisterName(getRegisterNumber(parts[1]));
-          const rt = getRegisterName(getRegisterNumber(parts[2]));
-          const shamt = parseInt(parts[3]);
-          this.state.registers[rd] = this.state.registers[rt] << shamt;
-          this.displayRegisters();
-          break;
-        }
-
-        case 'srl': {  // Shift right logical
-          const rd = getRegisterName(getRegisterNumber(parts[1]));
-          const rt = getRegisterName(getRegisterNumber(parts[2]));
-          const shamt = parseInt(parts[3]);
-          this.state.registers[rd] = this.state.registers[rt] >>> shamt;
-          this.displayRegisters();
-          break;
-        }
-
-        case 'sra': {  // Shift right arithmetic
-          const rd = getRegisterName(getRegisterNumber(parts[1]));
-          const rt = getRegisterName(getRegisterNumber(parts[2]));
-          const shamt = parseInt(parts[3]);
-          this.state.registers[rd] = this.state.registers[rt] >> shamt;
-          this.displayRegisters();
-          break;
-        }
-
         default:
           console.error(`Unknown operation: ${op}`);
           return false;
       }
 
-      this.state.registers['zero'] = 0;
-      this.displayRegisters();
+      this.state.registers['zero'] = 0; // Ensure $zero is always 0
       return true;
     } catch (error) {
-      console.error('Error in executeInstruction:', error);
+      console.error(`Error executing instruction "${instruction}":`, error);
       return false;
     }
   }
 
   public displayRegisters(): void {
-    console.log('displayRegisters called, registers:', this.state.registers);
-    if (this.onRegistersUpdate) {
-      console.log('Calling onRegistersUpdate');
-      this.onRegistersUpdate(this.state.registers);
+    console.log('\nRegisters:');
+    for (let i = 0; i < 32; i += 4) {
+      const regs = Array.from({ length: 4 }, (_, j) => {
+        const regNum = i + j;
+        const regName = getRegisterName(regNum);
+        return `$${regName}: ${this.state.registers[regName]}`;
+      });
+      console.log(regs.join(' | '));
     }
+    console.log();
   }
 
   public displayMemory(): void {
-    if (this.onMemoryUpdate) {
-      this.onMemoryUpdate(this.state.memory);
+    console.log('\nMemory:');
+    const addresses = Object.keys(this.state.memory).map(Number).sort((a, b) => a - b);
+    for (const addr of addresses) {
+      const value = this.state.memory[addr];
+      const display = value >= 32 && value <= 126 
+        ? `${value} ('${String.fromCharCode(value)}')`
+        : value;
+      console.log(`Address 0x${addr.toString(16).padStart(8, '0')}: ${display}`);
     }
+    console.log();
   }
 
   public run(): void {

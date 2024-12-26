@@ -1,21 +1,17 @@
 import { Button } from "@/components/ui/button"
 import { Upload } from "lucide-react"
 
-interface ToolbarProps {
-  onAssemble: () => void;
-  onReset: () => void;
-  onStep: () => void;
-  onCodeChange: (code: string) => void;
-  isRunning: boolean;
-}
-
 const Toolbar = ({ 
   onAssemble, 
   onReset, 
   onStep,
-  onCodeChange,
-  isRunning 
-}: ToolbarProps) => {
+  onCodeChange 
+}: { 
+  onAssemble: () => void;
+  onReset: () => void;
+  onStep: () => void;
+  onCodeChange: (code: string) => void;
+}) => {
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
@@ -51,27 +47,20 @@ const Toolbar = ({
           </Button>
         </div>
         <div className="h-4 w-px bg-gray-700" />
-        <button
+        <Button 
+          variant="secondary" 
+          className="bg-blue-600 hover:bg-blue-700 text-white"
           onClick={onAssemble}
-          disabled={isRunning}
-          className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
         >
-          {isRunning ? 'Running...' : 'Run'}
-        </button>
-        <button
-          onClick={onStep}
-          disabled={isRunning}
-          className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 disabled:opacity-50"
-        >
-          Step
-        </button>
-        <button
+          Run
+        </Button>
+        <Button 
+          variant="secondary" 
+          className="bg-gray-700 hover:bg-gray-600 text-white"
           onClick={onReset}
-          disabled={isRunning}
-          className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
         >
           Reset
-        </button>
+        </Button>
       </div>
       <div className="flex items-center space-x-2" />
     </div>

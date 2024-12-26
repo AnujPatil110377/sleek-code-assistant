@@ -1,79 +1,62 @@
 const RegistersViewer = () => {
   const registers = [
-    // First column
-    [
-      { name: '$zero', value: 0 },
-      { name: '$at', value: 0 },
-      { name: '$v0', value: 0 },
-      { name: '$v1', value: 0 },
-      { name: '$a0', value: 0 },
-      { name: '$a1', value: 0 },
-      { name: '$a2', value: 0 },
-      { name: '$a3', value: 0 },
-      { name: '$t0', value: 0 },
-      { name: '$t1', value: 0 },
-      { name: '$t2', value: 0 },
-      { name: '$t3', value: 0 },
-      { name: '$t4', value: 0 },
-      { name: '$t5', value: 0 },
-      { name: '$t6', value: 0 },
-      { name: '$t7', value: 0 },
-    ],
-    // Second column
-    [
-      { name: '$s0', value: 0 },
-      { name: '$s1', value: 0 },
-      { name: '$s2', value: 0 },
-      { name: '$s3', value: 0 },
-      { name: '$s4', value: 0 },
-      { name: '$s5', value: 0 },
-      { name: '$s6', value: 0 },
-      { name: '$s7', value: 0 },
-      { name: '$t8', value: 0 },
-      { name: '$t9', value: 0 },
-      { name: '$k0', value: 0 },
-      { name: '$k1', value: 0 },
-      { name: '$gp', value: 0 },
-      { name: '$sp', value: 0 },
-      { name: '$fp', value: 0 },
-      { name: '$ra', value: 0 },
-    ]
+    { name: '$zero', num: '0', value: '0x00000000' },
+    { name: '$at', num: '1', value: '0x00000000' },
+    { name: '$v0', num: '2', value: '0x00000004' },
+    { name: '$v1', num: '3', value: '0x00000000' },
+    { name: '$a0', num: '4', value: '0x1000002c' },
+    { name: '$a1', num: '5', value: '0x00000000' },
+    { name: '$a2', num: '6', value: '0x00000000' },
+    { name: '$a3', num: '7', value: '0x00000000' },
+    { name: '$t0', num: '8', value: '0x00000001' },
+    { name: '$t1', num: '9', value: '0x00000000' },
+    { name: '$t2', num: '10', value: '0x00000000' },
+    { name: '$t3', num: '11', value: '0x00000000' },
+    { name: '$t4', num: '12', value: '0x00000000' },
+    { name: '$t5', num: '13', value: '0x00000000' },
+    { name: '$t6', num: '14', value: '0x00000000' },
+    { name: '$t7', num: '15', value: '0x00000000' },
+    { name: '$s0', num: '16', value: '0x00000005' },
+    { name: '$s1', num: '17', value: '0x00000000' },
+    { name: '$s2', num: '18', value: '0x00000000' },
+    { name: '$s3', num: '19', value: '0x00000000' },
+    { name: '$s4', num: '20', value: '0x00000000' },
+    { name: '$s5', num: '21', value: '0x00000000' },
+    { name: '$s6', num: '22', value: '0x00000000' },
+    { name: '$s7', num: '23', value: '0x00000000' },
+    { name: '$t8', num: '24', value: '0x00000000' },
+    { name: '$t9', num: '25', value: '0x00000000' },
+    { name: '$k0', num: '26', value: '0x00000000' },
+    { name: '$k1', num: '27', value: '0x00000000' },
+    { name: '$gp', num: '28', value: '0x10008000' },
+    { name: '$sp', num: '29', value: '0x80000000' },
+    { name: '$fp', num: '30', value: '0x00000000' },
+    { name: '$ra', num: '31', value: '0x00000000' },
   ]
 
   return (
     <div className="h-full p-4">
-      <div className="bg-gray-800 rounded-lg p-2 h-full">
-        <h2 className="text-sm font-semibold text-blue-400 mb-2">Registers</h2>
-        <div className="h-[calc(100%-2rem)] overflow-auto custom-scrollbar">
-          <table className="w-full text-xs font-mono">
-            <thead className="sticky top-0 z-10">
-              <tr className="bg-gray-700">
-                <th className="text-left p-1 border-r border-gray-600">Register</th>
-                <th className="text-left p-1 border-r border-gray-600">Value</th>
-                <th className="text-left p-1 border-r border-gray-600">Register</th>
-                <th className="text-left p-1">Value</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Array.from({ length: 16 }).map((_, index) => (
-                <tr 
-                  key={index}
-                  className={`border-b border-gray-700 hover:bg-gray-700 transition-colors ${
-                    index % 2 === 0 ? 'bg-gray-750' : ''
-                  }`}
-                >
-                  <td className="p-1 text-gray-300 border-r border-gray-600">{registers[0][index].name}</td>
-                  <td className="p-1 text-blue-400 border-r border-gray-600">{registers[0][index].value}</td>
-                  <td className="p-1 text-gray-300 border-r border-gray-600">{registers[1][index].name}</td>
-                  <td className="p-1 text-blue-400">{registers[1][index].value}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <h2 className="text-sm font-semibold mb-2">Registers</h2>
+      <table className="w-full text-xs">
+        <thead>
+          <tr className="bg-gray-800">
+            <th className="text-left p-1">Register</th>
+            <th className="text-left p-1">Num.</th>
+            <th className="text-left p-1">Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          {registers.map((reg) => (
+            <tr key={reg.name} className="border-b border-gray-800">
+              <td className="p-1 font-mono">{reg.name}</td>
+              <td className="p-1 font-mono">{reg.num}</td>
+              <td className="p-1 font-mono text-teal-400">{reg.value}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }
 
-export default RegistersViewer
+export default RegistersViewer;

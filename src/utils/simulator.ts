@@ -259,4 +259,12 @@ export class MIPSSimulator {
       this.displayMemory();
     }
   }
+
+  public getRegisters(): { [key: string]: number } {
+    return { ...this.state.registers };
+  }
+
+  public getMemory(): { [address: number]: number } {
+    return { ...this.state.memory };
+  }
 } 

@@ -30,9 +30,10 @@ const MemoryViewer = ({ memory, onMemoryChange }: MemoryViewerProps) => {
     .map(Number)
     .sort((a, b) => a - b);
 
-  const displayableAddresses = addresses.filter(
-    addr => addr >= startAddress && addr < startAddress + 256
-  );
+  const displayableAddresses = Object.keys(memory)
+    .map(Number)
+    .filter(addr => addr >= startAddress && addr < startAddress + 256)
+    .sort((a, b) => a - b);
 
   return (
     <div className="h-[40vh] p-4">

@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
-import Editor from '@monaco-editor/react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { MessageSquare, Play, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { MessageSquare, Play } from 'lucide-react';
+import CodeEditor from '@/components/CodeEditor';
+import OutputPanel from '@/components/OutputPanel';
+import ChatPanel from '@/components/ChatPanel';
 
 const initialCode = `# MIPS Assembly Code
 .data
@@ -28,34 +28,6 @@ const Index = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Array<{text: string, isUser: boolean}>>([]);
-  const editorRef = useRef<any>(null);
-
-  useEffect(() => {
-    const debounce = (fn: Function, ms: number) => {
-      let timeoutId: ReturnType<typeof setTimeout>;
-      return function (...args: any[]) {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => fn.apply(null, args), ms);
-      };
-    };
-
-    const handleResize = debounce(() => {
-      if (editorRef.current?.layout) {
-        editorRef.current.layout();
-      }
-    }, 100);
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const handleEditorDidMount = (editor: any) => {
-    editorRef.current = editor;
-    // Initial layout update
-    setTimeout(() => {
-      editor.layout();
-    }, 100);
-  };
 
   const handleRunCode = () => {
     setOutput('Hello, world! This string is from MIPS!\n0 1 2 3 4');
@@ -98,108 +70,20 @@ const Index = () => {
               Run Code
             </Button>
           </div>
-          <Editor
-            height="calc(100% - 3rem)"
-            defaultLanguage="mips"
-            value={code}
-            onChange={(value) => setCode(value || '')}
-            theme="vs-dark"
-            options={{
-              minimap: { enabled: false },
-              fontSize: 14,
-              lineNumbers: 'on',
-              roundedSelection: false,
-              scrollBeyondLastLine: false,
-              readOnly: false,
-              automaticLayout: true,
-            }}
-            onMount={handleEditorDidMount}
-          />
+          <CodeEditor code={code} onChange={(value) => setCode(value || '')} />
         </div>
 
-        <div className="output-panel">
-          <h2 className="text-lg font-medium mb-4">Output & Registers</h2>
-          <div className="mb-4 p-4 bg-secondary rounded-lg">
-            <h3 className="text-sm font-medium mb-2">Program Output</h3>
-            <pre className="font-mono text-sm whitespace-pre-wrap">{output}</pre>
-          </div>
-          
-          <div>
-            <h3 className="text-sm font-medium mb-2">Registers</h3>
-            <div className="overflow-x-auto">
-              <table className="registers-table">
-                <thead>
-                  <tr>
-                    <th>Register</th>
-                    <th>Value</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>$zero</td>
-                    <td>0x00000000</td>
-                  </tr>
-                  <tr>
-                    <td>$v0</td>
-                    <td>0x00000004</td>
-                  </tr>
-                  <tr>
-                    <td>$a0</td>
-                    <td>0x10000000</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+        <OutputPanel output={output} />
       </div>
 
-      <div className={cn("chat-panel", !isChatOpen && "closed")}>
-        <div className="p-4 border-b flex items-center justify-between">
-          <h2 className="text-lg font-medium">AI Assistant</h2>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsChatOpen(false)}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-
-        <div className="chat-messages">
-          {messages.map((msg, i) => (
-            <div
-              key={i}
-              className={cn(
-                "mb-4 p-3 rounded-lg",
-                msg.isUser
-                  ? "bg-primary text-primary-foreground ml-8"
-                  : "bg-muted text-muted-foreground mr-8"
-              )}
-            >
-              {msg.text}
-            </div>
-          ))}
-        </div>
-
-        <div className="chat-input">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSendMessage();
-            }}
-            className="flex gap-2"
-          >
-            <Input
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Ask for help..."
-              className="flex-1"
-            />
-            <Button type="submit">Send</Button>
-          </form>
-        </div>
-      </div>
+      <ChatPanel
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        messages={messages}
+        message={message}
+        onMessageChange={setMessage}
+        onSendMessage={handleSendMessage}
+      />
     </div>
   );
 };

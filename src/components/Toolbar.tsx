@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { Upload, Play, Wrench, RotateCcw } from "lucide-react"
+import { Upload, Play, Tool, RotateCcw } from "lucide-react"
 
 interface ToolbarProps {
   onAssemble: () => void;
@@ -58,7 +58,7 @@ const Toolbar = ({
           className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
           onClick={onAssemble}
         >
-          <Wrench size={16} />
+          <Tool size={16} />
           Assemble
         </Button>
         <Button 

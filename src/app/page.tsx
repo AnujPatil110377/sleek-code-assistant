@@ -7,7 +7,6 @@ import ConsoleOutput from '@/components/ConsoleOutput';
 import MemoryViewer from '@/components/MemoryViewer';
 import RegisterViewer from '@/components/RegisterViewer';
 import { simulatorService } from '@/services/simulatorService';
-import { useToast } from '@/components/ui/use-toast';
 
 export default function Home() {
   const [code, setCode] = useState(`# Test MIPS program
@@ -25,7 +24,6 @@ export default function Home() {
   const [memory, setMemory] = useState<{[address: number]: number}>({});
   const [registers, setRegisters] = useState<{[key: string]: number}>({});
   const [isAssembled, setIsAssembled] = useState(false);
-  const { toast } = useToast();
 
   const handleAssemble = () => {
     console.log('Assembling code:', code);
@@ -33,19 +31,10 @@ export default function Home() {
       simulatorService.assemble(code);
       setIsAssembled(true);
       setOutput('Code assembled successfully.');
-      toast({
-        title: "Success",
-        description: "Code assembled successfully",
-      });
     } catch (error) {
       console.error('Assembly error:', error);
       setOutput(`Assembly Error: ${error.message}`);
       setIsAssembled(false);
-      toast({
-        title: "Error",
-        description: `Assembly Error: ${error.message}`,
-        variant: "destructive",
-      });
     }
   };
 
@@ -56,36 +45,9 @@ export default function Home() {
       setRegisters(result.registers);
       setMemory(result.memory);
       setOutput(result.output.join('\n'));
-      toast({
-        title: "Success",
-        description: "Code executed successfully",
-      });
     } catch (error) {
       console.error('Execution error:', error);
       setOutput(`Execution Error: ${error.message}`);
-      toast({
-        title: "Error",
-        description: `Execution Error: ${error.message}`,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleStep = () => {
-    console.log('Stepping through code');
-    try {
-      const result = simulatorService.step();
-      setRegisters(result.registers);
-      setMemory(result.memory);
-      setOutput(prev => prev + '\n' + result.output.join('\n'));
-    } catch (error) {
-      console.error('Step error:', error);
-      setOutput(`Step Error: ${error.message}`);
-      toast({
-        title: "Error",
-        description: `Step Error: ${error.message}`,
-        variant: "destructive",
-      });
     }
   };
 
@@ -95,10 +57,6 @@ export default function Home() {
     setMemory({});
     setRegisters({});
     setIsAssembled(false);
-    toast({
-      title: "Info",
-      description: "Simulator reset",
-    });
   };
 
   return (
@@ -107,7 +65,7 @@ export default function Home() {
         onAssemble={handleAssemble}
         onExecute={handleExecute}
         onReset={handleReset}
-        onStep={handleStep}
+        onStep={() => {}}
         onCodeChange={setCode}
         isAssembled={isAssembled}
       />

@@ -12,7 +12,6 @@ class SimulatorService {
   private consoleOutput: string[] = [];
 
   private setupConsoleCapture() {
-    // Capture console.log output
     const originalLog = console.log;
     console.log = (...args) => {
       this.consoleOutput.push(args.join(' '));
@@ -25,11 +24,10 @@ class SimulatorService {
     this.consoleOutput = [];
     
     try {
-      // Convert the code string into an array of lines
-      const lines = code.split('\n');
-      const [instructions, labels, memory] = parseLabelsAndInstructions(lines);
+      const cleanInstructions = readAsmFile(code);
+      const [instructions, labels, memory] = parseLabelsAndInstructions(cleanInstructions);
       
-      this.simulator = new MIPSSimulator(instructions, labels, memory);
+      this.simulator = new MIPSSimulator(instructions, labels, memory, false);
       console.log('Code assembled successfully');
     } catch (error) {
       console.error('Assembly error:', error);
@@ -60,34 +58,14 @@ class SimulatorService {
     }
   }
 
-  public step(): SimulationResult {
-    if (!this.simulator) {
-      throw new Error('No code assembled. Please assemble code first.');
-    }
-
-    try {
-      this.setupConsoleCapture();
-      this.simulator.step();
-
-      return {
-        registers: this.simulator.getRegisters(),
-        memory: this.simulator.getMemory(),
-        output: this.consoleOutput
-      };
-    } catch (error) {
-      console.error('Step execution error:', error);
-      throw error;
-    }
+  public isAssembled(): boolean {
+    return this.simulator !== null;
   }
 
   public reset(): void {
     this.simulator = null;
     this.consoleOutput = [];
   }
-
-  public isAssembled(): boolean {
-    return this.simulator !== null;
-  }
 }
 
-export const simulatorService = new SimulatorService();
+export const simulatorService = new SimulatorService(); 

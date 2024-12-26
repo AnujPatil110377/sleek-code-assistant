@@ -135,11 +135,9 @@ const Index = () => {
 
       <Toolbar 
         onAssemble={handleAssemble}
-        onExecute={() => {}} // Add empty execute handler
         onReset={handleReset}
         onStep={handleStep}
         onCodeChange={setCode}
-        isAssembled={false} // Add isAssembled prop
       />
 
       <div className="grid grid-cols-[2fr,1fr] gap-4 h-[calc(100vh-8rem)]">

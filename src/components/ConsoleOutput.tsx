@@ -2,7 +2,7 @@
 
 const ConsoleOutput = ({ output }: { output: string }) => {
   return (
-    <div className="h-40 p-4 min-h-[100px] max-h-[50vh]">
+    <div className="h-48 p-4 min-h-[150px] max-h-[60vh]">
       <div className="bg-gray-800 rounded-lg h-full flex flex-col overflow-hidden border border-gray-700 transition-all duration-300 hover:border-blue-500 relative">
         <div className="bg-gray-700 px-4 py-2 border-b border-gray-600 flex items-center justify-between">
           <span className="text-xs font-medium text-blue-400">Output</span>

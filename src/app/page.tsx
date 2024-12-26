@@ -38,9 +38,9 @@ const Page = () => {
       <div className="flex-1 flex overflow-hidden">
         <div className="flex-1 flex flex-col overflow-hidden">
           <ResizableBox
-            defaultSize={{ height: '50%' }}
-            minHeight={150}
-            maxHeight="70%"
+            defaultSize={{ height: '40%' }}
+            minHeight={100}
+            maxHeight="60%"
             className="w-full"
             handle={
               <ResizableHandle className="h-1 w-full cursor-row-resize bg-gray-700 hover:bg-blue-500 transition-colors" />

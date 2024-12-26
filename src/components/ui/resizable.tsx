@@ -1,7 +1,7 @@
 'use client'
 
-import { DragHandleDots2Icon } from '@radix-ui/react-icons'
 import * as ResizablePrimitive from 'react-resizable-panels'
+import { GripVertical } from "lucide-react"
 
 const ResizablePanel = ResizablePrimitive.Panel
 
@@ -9,12 +9,12 @@ const ResizableHandle = ({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
-  <ResizablePrimitive.PanelResizeHandle
+  <div
     className={className}
     {...props}
   >
-    <DragHandleDots2Icon className="h-4 w-4" />
-  </ResizablePrimitive.PanelResizeHandle>
+    <GripVertical className="h-4 w-4" />
+  </div>
 )
 
 const ResizableBox = ({

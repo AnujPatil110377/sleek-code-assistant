@@ -8,7 +8,7 @@ export function runMIPSProgram(programContent: string, singleStep: boolean = fal
     const [parsedInstructions, labels, memory] = parseLabelsAndInstructions(instructions);
 
     // Create and run simulator
-    const simulator = new MIPSSimulator(parsedInstructions, labels, memory, singleStep);
+    const simulator = new MIPSSimulator(parsedInstructions, labels, memory);
     simulator.run();
   } catch (error) {
     console.error('Error running MIPS program:', error);
@@ -30,4 +30,4 @@ main:
     syscall
 `;
 
-runMIPSProgram(program, true); 
+runMIPSProgram(program, true);

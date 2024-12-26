@@ -26,7 +26,7 @@ const Page = () => {
   }
 
   return (
-    <div className="h-[calc(100vh-2rem)] flex flex-col max-h-screen">
+    <div className="h-screen flex flex-col">
       <Toolbar 
         onAssemble={handleAssemble}
         onReset={handleReset}
@@ -35,12 +35,12 @@ const Page = () => {
       />
       <div className="flex-1 flex flex-col overflow-hidden">
         <ResizableBox
-          defaultSize={{ height: '50%' }}
-          minHeight={150}
-          maxHeight="70%"
+          defaultSize={{ height: '60%' }}
+          minHeight={200}
+          maxHeight="80%"
           className="w-full"
           handle={
-            <ResizableHandle className="h-1 w-full cursor-row-resize bg-gray-700 hover:bg-blue-500 transition-colors" />
+            <ResizableHandle className="h-2 w-full cursor-row-resize bg-gray-700 hover:bg-blue-500 transition-colors" />
           }
         >
           <CodeEditor code={code} onChange={setCode} />

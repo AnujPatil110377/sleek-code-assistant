@@ -4,7 +4,9 @@ import React, { useState } from 'react'
 import Toolbar from '@/components/Toolbar'
 import CodeEditor from '@/components/CodeEditor'
 import ConsoleOutput from '@/components/ConsoleOutput'
-import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from '@/components/ui/resizable'
+import RegistersViewer from '@/components/RegistersViewer'
+import MemoryViewer from '@/components/MemoryViewer'
+import { ResizableBox, ResizableHandle } from '@/components/ui/resizable'
 
 const Page = () => {
   const [code, setCode] = useState('')
@@ -26,27 +28,37 @@ const Page = () => {
   }
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-[calc(100vh-2rem)] flex flex-col max-h-screen">
       <Toolbar 
         onAssemble={handleAssemble}
         onReset={handleReset}
         onStep={handleStep}
         onCodeChange={setCode}
       />
-      <ResizablePanelGroup
-        direction="vertical"
-        className="flex-1"
-      >
-        <ResizablePanel defaultSize={60} minSize={30}>
-          <CodeEditor code={code} onChange={setCode} />
-        </ResizablePanel>
-        <ResizableHandle className="h-2 bg-gray-700 hover:bg-blue-500 transition-colors cursor-row-resize flex items-center justify-center">
-          <div className="w-8 h-1 bg-gray-600 rounded-full" />
-        </ResizableHandle>
-        <ResizablePanel defaultSize={40}>
+      <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <ResizableBox
+            defaultSize={{ height: '50%' }}
+            minHeight={150}
+            maxHeight="70%"
+            className="w-full"
+            handle={
+              <ResizableHandle className="h-1 w-full cursor-row-resize bg-gray-700 hover:bg-blue-500 transition-colors" />
+            }
+          >
+            <CodeEditor code={code} onChange={setCode} />
+          </ResizableBox>
           <ConsoleOutput output={output} />
-        </ResizablePanel>
-      </ResizablePanelGroup>
+        </div>
+        <div className="w-[400px] border-l border-gray-700 flex flex-col">
+          <div className="h-1/2">
+            <RegistersViewer />
+          </div>
+          <div className="h-1/2 border-t border-gray-700">
+            <MemoryViewer />
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

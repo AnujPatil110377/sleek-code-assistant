@@ -4,9 +4,8 @@ import ConsoleOutput from '@/components/ConsoleOutput';
 import MemoryViewer from '@/components/MemoryViewer';
 import RegistersViewer from '@/components/RegistersViewer';
 import Toolbar from '@/components/Toolbar';
-import { createInitialState, parseProgram, executeInstruction, saveState, loadState } from '@/utils/mipsSimulator';
+import { createInitialState, parseProgram, executeInstruction, SimulatorState, saveState, loadState } from '@/utils/mipsSimulator';
 import { useToast } from '@/components/ui/use-toast';
-import { SimulatorState } from '@/types/simulator';
 
 const initialCode = `.data
     hello: .asciiz "Hello, world! This string is from MIPS!\\n"
@@ -34,17 +33,14 @@ const Index = () => {
     try {
       console.log('Assembling code:', code);
       // First parse the code
-      const { instructions, labels, memory } = parseProgram(code);
+      const { instructions, labels } = parseProgram(code);
       
-      // Initialize simulator state with the parsed memory
+      // Initialize simulator state
       const initialState = {
         ...createInitialState(),
         labels,
-        instructions,
-        memory  // Include the initial memory state
+        instructions  // Store parsed instructions
       };
-      
-      console.log('Initial memory state:', memory);
       setSimulatorState(initialState);
 
       console.log('Executing program...');
@@ -56,7 +52,6 @@ const Index = () => {
         
         // Execute the instruction and get new state
         currentState = executeInstruction(currentState, currentInstruction);
-        console.log('Memory after instruction:', currentState.memory);
         
         // Update simulator state
         setSimulatorState(currentState);
@@ -91,7 +86,6 @@ const Index = () => {
       console.log('Current instruction:', currentInstruction);
       if (currentInstruction) {
         const newState = executeInstruction(simulatorState, currentInstruction);
-        console.log('Memory after step:', newState.memory);
         setSimulatorState(newState);
         setOutput(prev => `${prev}\nExecuted: ${currentInstruction}`);
       } else {
@@ -107,22 +101,9 @@ const Index = () => {
 
   const handleReset = () => {
     console.log('Resetting simulator');
-    const initialState = createInitialState();
-    console.log('Initial state after reset:', initialState);
-    setSimulatorState(initialState);
+    setSimulatorState(createInitialState());
     setOutput('');
     setIsRunning(false);
-  };
-
-  const handleMemoryChange = (address: number, value: number) => {
-    console.log(`Updating memory at address ${address} to value ${value}`);
-    setSimulatorState(prevState => ({
-      ...prevState,
-      memory: {
-        ...prevState.memory,
-        [address]: value
-      }
-    }));
   };
 
   const handleSaveState = () => {
@@ -200,10 +181,7 @@ const Index = () => {
           <div className="flex-1 overflow-auto">
             <RegistersViewer registers={simulatorState.registers} />
           </div>
-          <MemoryViewer 
-            memory={simulatorState.memory} 
-            onMemoryChange={handleMemoryChange}
-          />
+          <MemoryViewer memory={simulatorState.memory} />
         </div>
       </div>
     </div>

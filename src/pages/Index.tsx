@@ -6,6 +6,7 @@ import RegistersViewer from '@/components/RegistersViewer';
 import Toolbar from '@/components/Toolbar';
 import { createInitialState, parseProgram, executeInstruction, SimulatorState, saveState, loadState } from '@/utils/mipsSimulator';
 import { useToast } from '@/components/ui/use-toast';
+import { SimulatorState } from '@/types/simulator';
 
 const initialCode = `.data
     hello: .asciiz "Hello, world! This string is from MIPS!\\n"

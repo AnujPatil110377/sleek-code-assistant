@@ -1,3 +1,5 @@
+import { SimulatorState } from '@/types/simulator';
+
 // MIPS Register mapping
 export const registerMap: { [key: string]: number } = {
   'zero': 0, 'at': 1,
@@ -8,15 +10,6 @@ export const registerMap: { [key: string]: number } = {
   't8': 24, 't9': 25, 'k0': 26, 'k1': 27,
   'gp': 28, 'sp': 29, 'fp': 30, 'ra': 31
 };
-
-export interface SimulatorState {
-  registers: { [key: string]: number };
-  memory: { [address: number]: number };
-  pc: number;
-  running: boolean;
-  labels: { [key: string]: number };
-  terminated: boolean;
-}
 
 export const createInitialState = (): SimulatorState => ({
   registers: Object.keys(registerMap).reduce((acc, key) => {

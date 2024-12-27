@@ -1,6 +1,53 @@
 import { SimulatorState } from '../types/simulator';
 import { getRegisterNumber } from './registers';
 
+export class MIPSSimulator {
+  private state: SimulatorState;
+  private singleStep: boolean;
+
+  constructor(
+    instructions: string[],
+    labels: { [key: string]: number },
+    memory: { [address: number]: number },
+    singleStep: boolean = false
+  ) {
+    this.state = {
+      registers: {},
+      memory,
+      pc: 0,
+      running: true,
+      labels,
+      terminated: false,
+      instructions
+    };
+    this.singleStep = singleStep;
+  }
+
+  run(): void {
+    while (this.state.running && this.state.pc < this.state.instructions.length * 4) {
+      this.executeNextInstruction();
+      if (this.singleStep) {
+        break;
+      }
+    }
+  }
+
+  private executeNextInstruction(): void {
+    const instruction = this.state.instructions[this.state.pc / 4];
+    if (!instruction) {
+      this.state.running = false;
+      return;
+    }
+
+    this.executeInstruction(instruction);
+  }
+
+  private executeInstruction(instruction: string): void {
+    const newState = executeInstruction(this.state, instruction);
+    this.state = newState;
+  }
+}
+
 export const executeInstruction = (state: SimulatorState, instruction: string): SimulatorState => {
   const newState = {
     ...state,

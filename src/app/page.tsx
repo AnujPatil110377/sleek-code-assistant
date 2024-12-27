@@ -8,6 +8,7 @@ import MemoryViewer from '@/components/MemoryViewer';
 import RegisterViewer from '@/components/RegisterViewer';
 import { simulatorService } from '@/services/simulatorService';
 import { parseProgram } from '@/utils/mipsSimulator';
+import { useToast } from "@/components/ui/use-toast";
 
 export default function Home() {
   const [code, setCode] = useState(`# Test MIPS program
@@ -22,58 +23,77 @@ export default function Home() {
   const [output, setOutput] = useState('');
   const [memory, setMemory] = useState<{[address: number]: number}>({});
   const [registers, setRegisters] = useState<{[key: string]: number}>({});
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [updatedRegisters, setUpdatedRegisters] = useState<Set<string>>(new Set());
+  const { toast } = useToast();
 
-  // New test function
-  const testSimpleExecution = () => {
+  const testSimpleExecution = async () => {
     console.log('=== TEST EXECUTION START ===');
-    alert('Starting test execution');
+    setIsExecuting(true);
+    setUpdatedRegisters(new Set());
     
     try {
-      // Log current state
       console.log('Current code:', code);
       
-      // Try to execute
       const { instructions, labels, memory } = parseProgram(code);
-      const initialState: SimulatorState = {
+      const initialState = {
         registers: { 'zero': 0 },
-        memory: memory,  // Use the memory from parser
+        memory: memory,
         labels: labels,
         pc: 0,
         terminated: false
       };
+
       const result = simulatorService.executeCode(code);
       
-      // Update UI with results
-      console.log('Execution result:', result);
+      // Track which registers were updated
+      const updatedRegs = new Set<string>();
+      Object.keys(result.registers).forEach(reg => {
+        if (result.registers[reg] !== initialState.registers[reg]) {
+          updatedRegs.add(reg);
+        }
+      });
+      
       setRegisters(result.registers);
       setMemory(result.memory);
       setOutput(result.output.join('\n'));
+      setUpdatedRegisters(updatedRegs);
       
-      alert('Test execution completed!');
+      toast({
+        title: "Success",
+        description: "Program executed successfully",
+      });
     } catch (error) {
       console.error('Test execution failed:', error);
-      alert('Error: ' + error.message);
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setIsExecuting(false);
     }
   };
 
   return (
     <main className="min-h-screen bg-gray-900 text-white">
-      {/* Add test button at the top */}
       <button 
         onClick={testSimpleExecution}
-        className="m-4 p-2 bg-red-500 hover:bg-red-600 text-white rounded"
+        className="m-4 p-2 bg-red-500 hover:bg-red-600 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed"
+        disabled={isExecuting}
       >
-        Test Direct Execution
+        {isExecuting ? 'Executing...' : 'Test Direct Execution'}
       </button>
 
       <Toolbar 
-        onExecute={testSimpleExecution}  // Use the test function here
+        onExecute={testSimpleExecution}
         onReset={() => {
           console.log('Reset clicked');
           simulatorService.reset();
           setOutput('');
           setMemory({});
           setRegisters({});
+          setUpdatedRegisters(new Set());
         }}
         onCodeChange={setCode}
       />
@@ -84,7 +104,11 @@ export default function Home() {
         <div className="space-y-4">
           <ConsoleOutput output={output} />
           <div className="flex flex-col gap-4">
-            <RegisterViewer registers={registers} />
+            <RegisterViewer 
+              registers={registers} 
+              updatedRegisters={updatedRegisters}
+              isExecuting={isExecuting}
+            />
             <MemoryViewer 
               memory={memory}
               onMemoryChange={(address, value) => {

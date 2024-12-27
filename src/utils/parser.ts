@@ -78,12 +78,15 @@ export function parseLabelsAndInstructions(
             .replace(/"$/, '')
             .replace(/\\n/g, '\n');  // Handle newlines
             
-          // Store each character in memory
+          // Store each character in memory with hex addresses
           for (const char of str) {
-            memory[currentAddress] = char.charCodeAt(0);
+            const hexAddress = '0x' + currentAddress.toString(16).toUpperCase();
+            memory[hexAddress] = char.charCodeAt(0);
             currentAddress++;
           }
-          memory[currentAddress] = 0;  // Null-terminate
+          // Null terminate
+          const hexAddress = '0x' + currentAddress.toString(16).toUpperCase();
+          memory[hexAddress] = 0;
           currentAddress++;
         } else if (processedLine.startsWith('.word')) {
           const values = processedLine.replace('.word', '')
@@ -92,7 +95,8 @@ export function parseLabelsAndInstructions(
             .map(v => parseInt(v.trim()));
             
           for (const value of values) {
-            memory[currentAddress] = value;
+            const hexAddress = '0x' + currentAddress.toString(16).toUpperCase();
+            memory[hexAddress] = value;
             currentAddress += 4;  // Word-aligned
           }
         }

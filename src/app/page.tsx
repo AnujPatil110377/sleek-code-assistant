@@ -8,6 +8,7 @@ import MemoryViewer from '@/components/MemoryViewer';
 import RegisterViewer from '@/components/RegisterViewer';
 import { simulatorService } from '@/services/simulatorService';
 import { parseProgram } from '@/utils/mipsSimulator';
+import { SimulatorState } from '@/types/simulator';
 
 export default function Home() {
   const [code, setCode] = useState(`# Test MIPS program
@@ -39,7 +40,9 @@ export default function Home() {
         memory: memory,  // Use the memory from parser
         labels: labels,
         pc: 0,
-        terminated: false
+        terminated: false,
+        running: false,
+        instructions: instructions
       };
       const result = simulatorService.executeCode(code);
       

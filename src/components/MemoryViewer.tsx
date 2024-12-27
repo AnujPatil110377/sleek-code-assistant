@@ -2,31 +2,38 @@ import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 
 interface MemoryViewerProps {
-  memory: { [address: string]: number };
-  onMemoryChange?: (address: string, value: number) => void;
+  memory: { [address: number]: number };
+  onMemoryChange?: (address: number, value: number) => void;
 }
 
 const MemoryViewer = ({ memory, onMemoryChange }: MemoryViewerProps) => {
-  const [editingAddress, setEditingAddress] = useState<string | null>(null);
+  const [editingAddress, setEditingAddress] = useState<number | null>(null);
   const [editValue, setEditValue] = useState("");
   const [startAddress, setStartAddress] = useState(0x10010000);
 
-  const toHexAddress = (addr: number): string => {
-    return '0x' + addr.toString(16).toUpperCase().padStart(8, '0');
+  const handleEdit = (address: number) => {
+    setEditingAddress(address);
+    setEditValue(memory[address]?.toString() || "0");
   };
 
-  const fromHexAddress = (addr: string): number => {
-    return parseInt(addr.replace('0x', ''), 16);
+  const handleSave = (address: number) => {
+    if (onMemoryChange) {
+      const newValue = parseInt(editValue);
+      if (!isNaN(newValue)) {
+        onMemoryChange(address, newValue);
+      }
+    }
+    setEditingAddress(null);
   };
 
   const addresses = Object.keys(memory)
-    .sort((a, b) => fromHexAddress(a) - fromHexAddress(b));
+    .map(Number)
+    .sort((a, b) => a - b);
 
-  const displayableAddresses = addresses
-    .filter(addr => {
-      const decAddr = fromHexAddress(addr);
-      return decAddr >= startAddress && decAddr < startAddress + 256;
-    });
+  const displayableAddresses = Object.keys(memory)
+    .map(Number)
+    .filter(addr => addr >= startAddress && addr < startAddress + 256)
+    .sort((a, b) => a - b);
 
   return (
     <div className="h-[40vh] p-4">
@@ -52,7 +59,7 @@ const MemoryViewer = ({ memory, onMemoryChange }: MemoryViewerProps) => {
           <table className="w-full text-xs font-mono whitespace-nowrap">
             <thead>
               <tr className="bg-gray-700">
-                <th className="text-left p-1 sticky left-0 bg-gray-700 w-[100px]">Address</th>
+                <th className="text-left p-1 sticky left-0 bg-gray-700 w-[100px]">Addr</th>
                 <th className="text-left p-1 w-[250px]">Value</th>
                 <th className="text-left p-1 w-[150px]">ASCII</th>
               </tr>
@@ -61,7 +68,7 @@ const MemoryViewer = ({ memory, onMemoryChange }: MemoryViewerProps) => {
               {displayableAddresses.map((address) => (
                 <tr key={address} className="border-b border-gray-700">
                   <td className="p-1 text-blue-400 sticky left-0 bg-gray-800">
-                    {address}
+                    {address.toString(16).padStart(8, '0')}
                   </td>
                   <td className="p-1">
                     {editingAddress === address ? (
@@ -72,15 +79,7 @@ const MemoryViewer = ({ memory, onMemoryChange }: MemoryViewerProps) => {
                           className="w-20 h-6 py-0 px-1"
                         />
                         <button
-                          onClick={() => {
-                            if (onMemoryChange) {
-                              const newValue = parseInt(editValue, 16);
-                              if (!isNaN(newValue)) {
-                                onMemoryChange(address, newValue);
-                              }
-                            }
-                            setEditingAddress(null);
-                          }}
+                          onClick={() => handleSave(address)}
                           className="text-xs text-blue-400 hover:text-blue-300"
                         >
                           Save
@@ -89,12 +88,9 @@ const MemoryViewer = ({ memory, onMemoryChange }: MemoryViewerProps) => {
                     ) : (
                       <span
                         className="cursor-pointer hover:text-blue-300"
-                        onClick={() => {
-                          setEditingAddress(address);
-                          setEditValue(memory[address].toString(16).padStart(2, '0'));
-                        }}
+                        onClick={() => handleEdit(address)}
                       >
-                        {memory[address].toString(16).padStart(2, '0').toUpperCase()}
+                        {memory[address]?.toString(16).padStart(2, '0') || '00'}
                       </span>
                     )}
                   </td>

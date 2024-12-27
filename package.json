@@ -9,7 +9,7 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "jest",
+    "test": "node --max-old-space-size=8192 node_modules/jest/bin/jest.js",
     "test:manual": "ts-node src/examples/manual-test.ts"
   },
   "dependencies": {

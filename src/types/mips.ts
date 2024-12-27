@@ -7,7 +7,7 @@ export interface Labels {
 }
 
 export interface Memory {
-  [address: string]: number;
+  [address: number]: number;
 }
 
 export interface InstructionTuple {

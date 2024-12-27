@@ -1,6 +1,4 @@
-import { RegisterMap } from '../types/mips';
-
-export const registerMap: RegisterMap = {
+export const registerMap: { [key: string]: number } = {
   'zero': 0, 'at': 1,
   'v0': 2, 'v1': 3,
   'a0': 4, 'a1': 5, 'a2': 6, 'a3': 7,
@@ -10,7 +8,7 @@ export const registerMap: RegisterMap = {
   'gp': 28, 'sp': 29, 'fp': 30, 'ra': 31
 };
 
-export function getRegisterNumber(regName: string): number {
+export const getRegisterNumber = (regName: string): number => {
   const cleanName = regName.trim().replace('$', '');
   if (/^\d+$/.test(cleanName)) {
     return parseInt(cleanName);
@@ -19,11 +17,4 @@ export function getRegisterNumber(regName: string): number {
     return registerMap[cleanName];
   }
   throw new Error(`Unknown register name ${regName}`);
-}
-
-export function getRegisterName(num: number): string {
-  for (const [name, n] of Object.entries(registerMap)) {
-    if (n === num) return name;
-  }
-  throw new Error(`Unknown register number ${num}`);
-} 
+};

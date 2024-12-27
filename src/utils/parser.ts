@@ -1,118 +1,65 @@
-import { Labels, Memory } from '../types/mips';
+import { SimulatorState } from '../types/simulator';
 
-export function readAsmFile(content: string): string[] {
-  const lines = content.split('\n');
+export const parseProgram = (code: string) => {
+  console.log('=== Parsing Program ===');
   const instructions: string[] = [];
+  const labels: { [key: string]: number } = {};
+  const memory: { [address: number]: number } = {};
   
-  for (const line of lines) {
-    // Remove comments and trim whitespace
-    const cleanLine = line.replace(/#.*/, '').trim();
-    if (cleanLine) {
-      instructions.push(cleanLine);
-    }
-  }
-  
-  return instructions;
-}
-
-export function parseLabelsAndInstructions(
-  instructions: string[]
-): [string[], Labels, Memory] {
-  const labels: Labels = {};
-  const parsedInstructions: string[] = [];
-  const memory: Memory = {};
+  let currentAddress = 0;
+  let inDataSection = false;
   let pc = 0;
-  let dataMode = false;
-  let currentAddress = 0x10010000;  // Starting address for data section
 
-  // First pass: collect all labels
-  for (const line of instructions) {
-    if (line.startsWith('.data')) {
-      dataMode = true;
+  const lines = code.split('\n');
+  
+  for (let line of lines) {
+    line = line.replace(/#.*$/, '').trim();
+    if (!line) continue;
+
+    if (line === '.data') {
+      inDataSection = true;
       continue;
-    } else if (line.startsWith('.text')) {
-      dataMode = false;
-      pc = 0;
+    } else if (line === '.text') {
+      inDataSection = false;
       continue;
     }
 
-    const colonIndex = line.indexOf(':');
-    if (colonIndex !== -1) {
-      const label = line.substring(0, colonIndex).trim();
-      if (dataMode) {
+    if (inDataSection) {
+      if (line.includes(':')) {
+        const [label, directive] = line.split(':').map(part => part.trim());
         labels[label] = currentAddress;
-      } else {
-        labels[label] = pc;
-      }
-    }
 
-    if (!dataMode && !line.endsWith(':')) {
-      pc += 4;
-    }
-  }
-
-  // Reset for second pass
-  dataMode = false;
-  currentAddress = 0x10010000;
-
-  // Second pass: process instructions and data
-  for (const line of instructions) {
-    if (line.startsWith('.data')) {
-      dataMode = true;
-      continue;
-    } else if (line.startsWith('.text')) {
-      dataMode = false;
-      continue;
-    }
-
-    if (dataMode) {
-      const colonIndex = line.indexOf(':');
-      if (colonIndex !== -1) {
-        const processedLine = line.substring(colonIndex + 1).trim();
-        
-        if (processedLine.startsWith('.asciiz')) {
-          // Extract the string content
-          const str = processedLine.replace('.asciiz', '')
-            .trim()
-            .replace(/^"/, '')
-            .replace(/"$/, '')
-            .replace(/\\n/g, '\n');  // Handle newlines
-            
-          // Store each character in memory
-          for (const char of str) {
-            memory[currentAddress] = char.charCodeAt(0);
+        if (directive.includes('.asciiz')) {
+          const match = directive.match(/"([^"]*)"/) || ['', ''];
+          const str = match[1];
+          console.log(`Storing string "${str}" at address ${currentAddress.toString(16)}`);
+          
+          for (let i = 0; i < str.length; i++) {
+            memory[currentAddress] = str.charCodeAt(i);
             currentAddress++;
           }
-          memory[currentAddress] = 0;  // Null-terminate
+          memory[currentAddress] = 0;
           currentAddress++;
-        } else if (processedLine.startsWith('.word')) {
-          const values = processedLine.replace('.word', '')
-            .trim()
-            .split(',')
-            .map(v => parseInt(v.trim()));
-            
-          for (const value of values) {
-            memory[currentAddress] = value;
-            currentAddress += 4;  // Word-aligned
-          }
         }
       }
     } else {
-      const colonIndex = line.indexOf(':');
-      if (colonIndex !== -1) {
-        const label = line.substring(0, colonIndex).trim();
+      if (line.includes(':')) {
+        const [label, instruction] = line.split(':').map(part => part.trim());
         labels[label] = pc;
-        const instruction = line.substring(colonIndex + 1).trim();
         if (instruction) {
-          parsedInstructions.push(instruction);
+          instructions.push(instruction);
           pc += 4;
         }
-      } else if (line) {
-        parsedInstructions.push(line);
+      } else {
+        instructions.push(line);
         pc += 4;
       }
     }
   }
 
-  return [parsedInstructions, labels, memory];
-} 
+  console.log('Labels:', labels);
+  console.log('Memory:', memory);
+  console.log('Instructions:', instructions);
+
+  return { instructions, labels, memory };
+};

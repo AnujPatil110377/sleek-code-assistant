@@ -242,20 +242,30 @@ export class MIPSSimulator {
       });
       console.log(regs.join(' | '));
     }
-    console.log();
   }
 
   public displayMemory(): void {
     console.log('\nMemory:');
-    const addresses = Object.keys(this.state.memory).map(Number).sort((a, b) => a - b);
+    const addresses = Object.keys(this.state.memory)
+      .map(addr => addr.toString())
+      .sort((a, b) => parseInt(a, 16) - parseInt(b, 16));
+
+    if (addresses.length === 0) {
+      console.log('No memory contents to display');
+      return;
+    }
+
     for (const addr of addresses) {
       const value = this.state.memory[addr];
+      if (value === undefined) {
+        console.log(`Address ${addr}: Not initialized`);
+        continue;
+      }
       const display = value >= 32 && value <= 126 
-        ? `${value} ('${String.fromCharCode(value)}')`
-        : value;
-      console.log(`Address 0x${addr.toString(16).padStart(8, '0')}: ${display}`);
+        ? `${value.toString(16).padStart(2, '0')} ('${String.fromCharCode(value)}')`
+        : value.toString(16).padStart(2, '0');
+      console.log(`Address ${addr}: ${display}`);
     }
-    console.log();
   }
 
   public run(): void {
@@ -276,9 +286,6 @@ export class MIPSSimulator {
       if (this.singleStep) {
         this.displayRegisters();
         this.displayMemory();
-        // In a real implementation, you might want to use a more sophisticated
-        // way to handle single-stepping
-        prompt('Press Enter to continue...');
       }
 
       this.state.pc += 4;

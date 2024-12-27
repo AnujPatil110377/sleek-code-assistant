@@ -71,21 +71,20 @@ export function parseLabelsAndInstructions(
         const processedLine = line.substring(colonIndex + 1).trim();
         
         if (processedLine.startsWith('.asciiz')) {
-          // Extract the string content
           const str = processedLine.replace('.asciiz', '')
             .trim()
             .replace(/^"/, '')
             .replace(/"$/, '')
-            .replace(/\\n/g, '\n');  // Handle newlines
+            .replace(/\\n/g, '\n');
             
           // Store each character in memory with hex addresses
           for (const char of str) {
-            const hexAddress = '0x' + currentAddress.toString(16).toUpperCase();
+            const hexAddress = '0x' + currentAddress.toString(16).toUpperCase().padStart(8, '0');
             memory[hexAddress] = char.charCodeAt(0);
             currentAddress++;
           }
           // Null terminate
-          const hexAddress = '0x' + currentAddress.toString(16).toUpperCase();
+          const hexAddress = '0x' + currentAddress.toString(16).toUpperCase().padStart(8, '0');
           memory[hexAddress] = 0;
           currentAddress++;
         } else if (processedLine.startsWith('.word')) {

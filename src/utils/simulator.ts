@@ -39,15 +39,29 @@ export class MIPSSimulator {
         console.log(`Output (int): ${this.state.registers['a0']}`);
         break;
         
-      case 4:  // Print string
-        let output = '';
-        let address = this.state.registers['a0'];
-        while (this.state.memory[address] !== 0) {
-          output += String.fromCharCode(this.state.memory[address]);
-          address++;
+      case 4: {  // Print string
+        const startAddress = this.state.registers['a0'];
+        let currentAddress = startAddress;
+        let outputString = '';
+        
+        // Convert decimal address to hex string format
+        const hexAddress = '0x' + currentAddress.toString(16).toUpperCase().padStart(8, '0');
+        
+        // Debug log
+        console.log(`Accessing memory at address: ${hexAddress}`);
+        
+        while (this.state.memory[hexAddress] !== undefined && this.state.memory[hexAddress] !== 0) {
+          outputString += String.fromCharCode(this.state.memory[hexAddress]);
+          currentAddress++;
         }
-        console.log(`Output (string): ${output}`);
+        
+        if (outputString) {
+          console.log(`Output (string): ${outputString}`);
+        } else {
+          console.log(`No valid string found in memory at address: ${hexAddress}`);
+        }
         break;
+      }
         
       case 10:  // Exit program
         console.log('Program exit requested');
@@ -199,13 +213,22 @@ export class MIPSSimulator {
               let currentAddress = startAddress;
               let outputString = '';
               
-              // Read string from memory until null terminator
-              while (this.state.memory[currentAddress] !== 0) {
-                outputString += String.fromCharCode(this.state.memory[currentAddress]);
+              // Convert decimal address to hex string format
+              const hexAddress = '0x' + currentAddress.toString(16).toUpperCase().padStart(8, '0');
+              
+              // Debug log
+              console.log(`Accessing memory at address: ${hexAddress}`);
+              
+              while (this.state.memory[hexAddress] !== undefined && this.state.memory[hexAddress] !== 0) {
+                outputString += String.fromCharCode(this.state.memory[hexAddress]);
                 currentAddress++;
               }
               
-              console.log(`Output (string): ${outputString}`);
+              if (outputString) {
+                console.log(`Output (string): ${outputString}`);
+              } else {
+                console.log(`No valid string found in memory at address: ${hexAddress}`);
+              }
               break;
             }
             

@@ -4,7 +4,7 @@ import ConsoleOutput from '@/components/ConsoleOutput';
 import MemoryViewer from '@/components/MemoryViewer';
 import RegistersViewer from '@/components/RegistersViewer';
 import Toolbar from '@/components/Toolbar';
-import { createInitialState, parseProgram, executeInstruction, SimulatorState, saveState, loadState } from '@/utils/mipsSimulator';
+import { createInitialState, parseProgram, executeInstruction, saveState, loadState } from '@/utils/mipsSimulator';
 import { useToast } from '@/components/ui/use-toast';
 import { SimulatorState } from '@/types/simulator';
 

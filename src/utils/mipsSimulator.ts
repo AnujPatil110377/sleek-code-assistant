@@ -20,7 +20,8 @@ export const createInitialState = (): SimulatorState => ({
   pc: 0,
   running: false,
   labels: {},
-  terminated: false
+  terminated: false,
+  instructions: []
 });
 
 export const parseProgram = (code: string) => {

@@ -40,7 +40,9 @@ export default function Home() {
         memory: memory,  // Use the memory from parser
         labels: labels,
         pc: 0,
-        terminated: false
+        terminated: false,
+        running: false,
+        instructions: instructions
       };
       const result = simulatorService.executeCode(code);
       

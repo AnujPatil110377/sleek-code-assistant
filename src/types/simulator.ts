@@ -6,6 +6,7 @@ export interface SimulatorState {
   labels: { [key: string]: number };
   terminated: boolean;
   instructions: string[];
+  breakpoints: Set<number>;
 }
 
 export interface RegisterMap {

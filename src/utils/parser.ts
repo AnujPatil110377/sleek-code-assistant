@@ -62,25 +62,26 @@ export const parseLabelsAndInstructions = (lines: string[]): [string[], { [key: 
 };
 
 export const parseProgram = (code: string) => {
-  console.log('=== Parsing Program ===');
   const instructions: string[] = [];
   const labels: { [key: string]: number } = {};
   const memory: { [address: number]: number } = {};
   
-  let currentAddress = 0;
+  let currentAddress = 0x10010000; // Data segment start address
   let inDataSection = false;
-  let pc = 0;
+  let pc = 0x00400000; // Text segment start address
 
   const lines = code.split('\n');
   
   for (let line of lines) {
+    // Remove comments and trim whitespace
     line = line.replace(/#.*$/, '').trim();
     if (!line) continue;
 
-    if (line === '.data') {
+    // Handle sections
+    if (line.toLowerCase() === '.data') {
       inDataSection = true;
       continue;
-    } else if (line === '.text') {
+    } else if (line.toLowerCase() === '.text') {
       inDataSection = false;
       continue;
     }
@@ -90,20 +91,32 @@ export const parseProgram = (code: string) => {
         const [label, directive] = line.split(':').map(part => part.trim());
         labels[label] = currentAddress;
 
-        if (directive.includes('.asciiz')) {
-          const match = directive.match(/"([^"]*)"/) || ['', ''];
-          const str = match[1];
-          console.log(`Storing string "${str}" at address ${currentAddress.toString(16)}`);
+        if (directive) {
+          const [directiveType, ...args] = directive.trim().split(/\s+/);
           
-          for (let i = 0; i < str.length; i++) {
-            memory[currentAddress] = str.charCodeAt(i);
-            currentAddress++;
+          switch (directiveType.toLowerCase()) {
+            case '.asciiz':
+              const match = directive.match(/"([^"]*)"/) || ['', ''];
+              const str = match[1];
+              for (let i = 0; i < str.length; i++) {
+                memory[currentAddress] = str.charCodeAt(i);
+                currentAddress++;
+              }
+              memory[currentAddress] = 0; // Null terminator
+              currentAddress++;
+              break;
+              
+            case '.word':
+              args.forEach(arg => {
+                memory[currentAddress] = parseInt(arg);
+                currentAddress += 4;
+              });
+              break;
           }
-          memory[currentAddress] = 0;
-          currentAddress++;
         }
       }
     } else {
+      // Handle text section
       if (line.includes(':')) {
         const [label, instruction] = line.split(':').map(part => part.trim());
         labels[label] = pc;

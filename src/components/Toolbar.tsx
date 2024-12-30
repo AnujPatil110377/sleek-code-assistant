@@ -2,9 +2,9 @@ import { Button } from "@/components/ui/button"
 import { Upload, Play, RotateCcw } from "lucide-react"
 
 interface ToolbarProps {
-  onExecute: () => void;
-  onReset: () => void;
-  onCodeChange: (code: string) => void;
+  onExecute?: () => void;  // Made optional with ?
+  onReset?: () => void;
+  onCodeChange?: (code: string) => void;
 }
 
 const Toolbar = ({ onExecute, onReset, onCodeChange }: ToolbarProps) => {
@@ -50,7 +50,11 @@ const Toolbar = ({ onExecute, onReset, onCodeChange }: ToolbarProps) => {
         className="bg-blue-600 hover:bg-blue-700 text-white"
         onClick={() => {
           console.log('=== Run Button Clicked ===');
-          onExecute();
+          if (onExecute) {
+            onExecute();
+          } else {
+            console.warn('onExecute prop is not provided to Toolbar component');
+          }
         }}
       >
         <Play className="w-4 h-4 mr-2" />
@@ -62,7 +66,11 @@ const Toolbar = ({ onExecute, onReset, onCodeChange }: ToolbarProps) => {
         className="bg-gray-700 hover:bg-gray-600 text-white"
         onClick={() => {
           console.log('=== Reset Button Clicked ===');
-          onReset();
+          if (onReset) {
+            onReset();
+          } else {
+            console.warn('onReset prop is not provided to Toolbar component');
+          }
         }}
       >
         <RotateCcw className="w-4 h-4 mr-2" />

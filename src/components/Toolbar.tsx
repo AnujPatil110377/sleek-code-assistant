@@ -5,10 +5,9 @@ interface ToolbarProps {
   onExecute: () => void;
   onReset: () => void;
   onCodeChange: (code: string) => void;
-  isAssembled?: boolean;
 }
 
-const Toolbar = ({ onExecute, onReset, onCodeChange, isAssembled = false }: ToolbarProps) => {
+const Toolbar = ({ onExecute, onReset, onCodeChange }: ToolbarProps) => {
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     console.log('=== File Upload Started ===');
     const file = event.target.files?.[0]
@@ -18,7 +17,9 @@ const Toolbar = ({ onExecute, onReset, onCodeChange, isAssembled = false }: Tool
       reader.onload = (e) => {
         const text = e.target?.result as string
         console.log('File contents loaded:', text.substring(0, 100) + '...');
-        onCodeChange(text);
+        if (onCodeChange) {
+          onCodeChange(text)
+        }
       }
       reader.readAsText(file)
     }
@@ -48,15 +49,8 @@ const Toolbar = ({ onExecute, onReset, onCodeChange, isAssembled = false }: Tool
         variant="secondary" 
         className="bg-blue-600 hover:bg-blue-700 text-white"
         onClick={() => {
-          console.log('Run button clicked');
-          alert('Run button clicked');
-          if (onExecute) {
-            console.log('Calling onExecute function');
-            onExecute();
-          } else {
-            console.error('onExecute function is not defined!');
-            alert('Error: Execute function not found!');
-          }
+          console.log('=== Run Button Clicked ===');
+          onExecute();
         }}
       >
         <Play className="w-4 h-4 mr-2" />
@@ -66,7 +60,10 @@ const Toolbar = ({ onExecute, onReset, onCodeChange, isAssembled = false }: Tool
       <Button 
         variant="secondary" 
         className="bg-gray-700 hover:bg-gray-600 text-white"
-        onClick={onReset}
+        onClick={() => {
+          console.log('=== Reset Button Clicked ===');
+          onReset();
+        }}
       >
         <RotateCcw className="w-4 h-4 mr-2" />
         Reset

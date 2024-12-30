@@ -24,56 +24,25 @@ const Index = () => {
   const [isRunning, setIsRunning] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    console.log('=== Code Changed ===');
-    console.log(code);
-  }, [code]);
-
-  const handleExecute = () => {
+  const handleAssemble = () => {
     try {
       console.log('Assembling code:', code);
-      // First parse the code
       const { instructions, labels } = parseProgram(code);
-      
-      // Initialize simulator state
-      const initialState = {
+      setSimulatorState(prev => ({
         ...createInitialState(),
-        labels,
-        instructions  // Store parsed instructions
-      };
-      setSimulatorState(initialState);
-
-      console.log('Executing program...');
-      // Execute all instructions
-      let currentState = initialState;
-      while (currentState.pc < instructions.length * 4) {  // Each instruction is 4 bytes
-        const currentInstruction = instructions[currentState.pc / 4];
-        console.log('Executing instruction:', currentInstruction);
-        
-        // Execute the instruction and get new state
-        currentState = executeInstruction(currentState, currentInstruction);
-        
-        // Update simulator state
-        setSimulatorState(currentState);
-        
-        // Check for program termination (e.g., syscall exit)
-        if (currentState.terminated) {
-          break;
-        }
-      }
-
-      setOutput('Program executed successfully');
+        labels
+      }));
+      setOutput('Program assembled successfully');
       toast({
         title: "Success",
-        description: "Program executed successfully",
+        description: "Program assembled successfully",
       });
-
     } catch (error) {
-      console.error('Execution error:', error);
-      setOutput(`Execution error: ${error}`);
+      console.error('Assembly error:', error);
+      setOutput(`Assembly error: ${error}`);
       toast({
         title: "Error",
-        description: `Execution error: ${error}`,
+        description: `Assembly error: ${error}`,
         variant: "destructive",
       });
     }
@@ -83,7 +52,6 @@ const Index = () => {
     try {
       const { instructions } = parseProgram(code);
       const currentInstruction = instructions[simulatorState.pc / 4];
-      console.log('Current instruction:', currentInstruction);
       if (currentInstruction) {
         const newState = executeInstruction(simulatorState, currentInstruction);
         setSimulatorState(newState);
@@ -166,10 +134,10 @@ const Index = () => {
       </nav>
 
       <Toolbar 
-        onExecute={handleExecute}
+        onAssemble={handleAssemble}
         onReset={handleReset}
+        onStep={handleStep}
         onCodeChange={setCode}
-        isAssembled={true}
       />
 
       <div className="grid grid-cols-[2fr,1fr] gap-4 h-[calc(100vh-8rem)]">

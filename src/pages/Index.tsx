@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import CodeEditor from '@/components/CodeEditor';
 import ConsoleOutput from '@/components/ConsoleOutput';
 import MemoryViewer from '@/components/MemoryViewer';
@@ -6,6 +6,7 @@ import RegistersViewer from '@/components/RegistersViewer';
 import Toolbar from '@/components/Toolbar';
 import { createInitialState, parseProgram, executeInstruction, SimulatorState, saveState, loadState } from '@/utils/mipsSimulator';
 import { useToast } from '@/components/ui/use-toast';
+import { simulateCode } from '@/utils/api';
 
 const initialCode = `.data
     hello: .asciiz "Hello, world! This string is from MIPS!\\n"
@@ -22,6 +23,7 @@ const Index = () => {
   const [output, setOutput] = useState('');
   const [simulatorState, setSimulatorState] = useState<SimulatorState>(createInitialState());
   const [isRunning, setIsRunning] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const handleAssemble = () => {
@@ -111,6 +113,52 @@ const Index = () => {
     }
   };
 
+  const handleExecute = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      // Store current registers state before execution
+      const prevRegs = { ...simulatorState.registers };
+
+      const result = await simulateCode(code);
+
+      if (result.success && result.data) {
+        setOutput(result.data.console_output || '');
+        
+        // Create new state object with the response data
+        const newRegisters = result.data.registers || {};
+        const newMemory = result.data.memory || {};
+        
+        // Update simulator state with new values while preserving structure
+        const newState = {
+          ...simulatorState,
+          registers: newRegisters,
+          memory: newMemory,
+          pc: simulatorState.pc + 4,  // Increment PC like in mipsSimulator
+          running: true
+        };
+        
+        // Update simulator state and store previous registers
+        setSimulatorState(newState);
+        setSimulatorState(prev => {
+          prev.previousRegisters = prevRegs;
+          return prev;
+        });
+      } else {
+        throw new Error(result.error || 'Simulation failed');
+      }
+    } catch (error) {
+      console.error('Execution error:', error);
+      setOutput(error.message || 'Error executing code');
+      toast({
+        title: "Error",
+        description: error.message || 'Error executing code',
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [code, simulatorState]);
+
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isRunning) {
@@ -138,6 +186,8 @@ const Index = () => {
         onReset={handleReset}
         onStep={handleStep}
         onCodeChange={setCode}
+        onExecute={handleExecute}
+        isLoading={isLoading}
       />
 
       <div className="grid grid-cols-[2fr,1fr] gap-4 h-[calc(100vh-8rem)]">

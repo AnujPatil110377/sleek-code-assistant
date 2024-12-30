@@ -2,38 +2,18 @@ import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 
 interface MemoryViewerProps {
-  memory: { [address: number]: number };
-  onMemoryChange?: (address: number, value: number) => void;
+  memory: { [address: string]: number };
 }
 
-const MemoryViewer = ({ memory, onMemoryChange }: MemoryViewerProps) => {
-  const [editingAddress, setEditingAddress] = useState<number | null>(null);
-  const [editValue, setEditValue] = useState("");
+const MemoryViewer = ({ memory }: MemoryViewerProps) => {
   const [startAddress, setStartAddress] = useState(0x10010000);
 
-  const handleEdit = (address: number) => {
-    setEditingAddress(address);
-    setEditValue(memory[address]?.toString() || "0");
-  };
-
-  const handleSave = (address: number) => {
-    if (onMemoryChange) {
-      const newValue = parseInt(editValue);
-      if (!isNaN(newValue)) {
-        onMemoryChange(address, newValue);
-      }
-    }
-    setEditingAddress(null);
-  };
-
-  const addresses = Object.keys(memory)
-    .map(Number)
-    .sort((a, b) => a - b);
-
   const displayableAddresses = Object.keys(memory)
-    .map(Number)
-    .filter(addr => addr >= startAddress && addr < startAddress + 256)
-    .sort((a, b) => a - b);
+    .filter(addr => {
+      const numAddr = parseInt(addr, 16);
+      return numAddr >= startAddress && numAddr < startAddress + 256;
+    })
+    .sort((a, b) => parseInt(a, 16) - parseInt(b, 16));
 
   return (
     <div className="h-[40vh] p-4">
@@ -68,31 +48,10 @@ const MemoryViewer = ({ memory, onMemoryChange }: MemoryViewerProps) => {
               {displayableAddresses.map((address) => (
                 <tr key={address} className="border-b border-gray-700">
                   <td className="p-1 text-blue-400 sticky left-0 bg-gray-800">
-                    {address.toString(16).padStart(8, '0')}
+                    {address}
                   </td>
                   <td className="p-1">
-                    {editingAddress === address ? (
-                      <div className="flex items-center gap-1">
-                        <Input
-                          value={editValue}
-                          onChange={(e) => setEditValue(e.target.value)}
-                          className="w-20 h-6 py-0 px-1"
-                        />
-                        <button
-                          onClick={() => handleSave(address)}
-                          className="text-xs text-blue-400 hover:text-blue-300"
-                        >
-                          Save
-                        </button>
-                      </div>
-                    ) : (
-                      <span
-                        className="cursor-pointer hover:text-blue-300"
-                        onClick={() => handleEdit(address)}
-                      >
-                        {memory[address]?.toString(16).padStart(2, '0') || '00'}
-                      </span>
-                    )}
+                    {memory[address]?.toString(16).padStart(2, '0') || '00'}
                   </td>
                   <td className="p-1 text-gray-400">
                     {memory[address] >= 32 && memory[address] <= 126

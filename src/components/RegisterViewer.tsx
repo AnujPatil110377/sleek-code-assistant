@@ -2,9 +2,15 @@
 
 interface RegisterViewerProps {
   registers: { [key: string]: number };
+  previousRegisters: { [key: string]: number };
 }
 
-const RegisterViewer = ({ registers }: RegisterViewerProps) => {
+const RegisterViewer = ({ registers, previousRegisters }: RegisterViewerProps) => {
+  const hasChanged = (name: string) => {
+    return previousRegisters[name] !== undefined && 
+           previousRegisters[name] !== registers[name];
+  };
+
   return (
     <div className="h-[40vh] p-4">
       <div className="bg-gray-800 rounded-lg p-2 h-full w-[500px]">
@@ -22,7 +28,12 @@ const RegisterViewer = ({ registers }: RegisterViewerProps) => {
             </thead>
             <tbody>
               {Object.entries(registers).map(([name, value]) => (
-                <tr key={name} className="border-b border-gray-700">
+                <tr 
+                  key={name} 
+                  className={`border-b border-gray-700 ${
+                    hasChanged(name) ? 'bg-blue-900 bg-opacity-30' : ''
+                  }`}
+                >
                   <td className="p-1 text-blue-400 sticky left-0 bg-gray-800">
                     ${name}
                   </td>

@@ -7,7 +7,7 @@ export interface Labels {
 }
 
 export interface Memory {
-  [address: number]: number;
+  [address: string]: number;
 }
 
 export interface InstructionTuple {
@@ -21,4 +21,13 @@ export interface InstructionMap {
     instruction: string;
     machineCode: string | null;
   };
-} 
+}
+
+export interface SimulatorState {
+  registers: { [key: string]: number };
+  previousRegisters: { [key: string]: number };
+  memory: { [address: string]: number };
+  pc: number;
+  running: boolean;
+  labels: { [key: string]: number };
+}

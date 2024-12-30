@@ -3,14 +3,15 @@ import { Button } from "@/components/ui/button"
 import { Upload, Play, RotateCcw } from "lucide-react"
 
 interface ToolbarProps {
-  onExecute: () => Promise<void>;
+  onExecute?: () => Promise<void>;
   onReset?: () => void;
   onCodeChange?: (code: string) => void;
   isLoading?: boolean;
+  onAssemble?: () => void;
+  onStep?: () => void;
 }
 
 const Toolbar = (props: ToolbarProps) => {
-  // Log props on component mount and updates
   useEffect(() => {
     console.log('Toolbar props:', props);
   }, [props]);
@@ -50,21 +51,16 @@ const Toolbar = (props: ToolbarProps) => {
   const handleRunClick = async () => {
     console.log('=== Run Button Clicked ===');
     console.log('Props at click time:', props);
-    setIsLoading(true);
-    console.log('Calling execute handler');
-    try {
-      console.log('Before await onExecute()');
-      if (typeof props.onExecute === 'function') {
+    if (props.onExecute) {
+      try {
+        console.log('Before await onExecute()');
         await props.onExecute();
         console.log('After await onExecute()');
-      } else {
-        console.error('onExecute is not a function. Props:', props);
+      } catch (error) {
+        console.error('Error during execution:', error);
       }
-    } catch (error) {
-      console.error('Error during execution:', error);
-    } finally {
-      console.log('Setting loading state to false');
-      setIsLoading(false);
+    } else {
+      console.warn('No onExecute handler provided');
     }
   }
   
@@ -105,9 +101,9 @@ const Toolbar = (props: ToolbarProps) => {
         variant="secondary" 
         className="bg-blue-600 hover:bg-blue-700 text-white"
         onClick={handleRunClick}
-        disabled={isLoading}
+        disabled={props.isLoading}
       >
-        {isLoading ? (
+        {props.isLoading ? (
           <>
             <span className="animate-spin mr-2">⌛</span>
             Running...

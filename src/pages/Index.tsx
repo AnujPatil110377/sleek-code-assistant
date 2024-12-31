@@ -4,9 +4,11 @@ import ConsoleOutput from '@/components/ConsoleOutput';
 import MemoryViewer from '@/components/MemoryViewer';
 import RegistersViewer from '@/components/RegistersViewer';
 import Toolbar from '@/components/Toolbar';
-import { createInitialState, parseProgram, executeInstruction, SimulatorState, saveState, loadState } from '@/utils/mipsSimulator';
+import AIChatWindow from '@/components/AIChatWindow';
+import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from '@/components/ui/use-toast';
 import { simulateCode } from '@/utils/api';
+import { createInitialState, parseProgram, executeInstruction, SimulatorState } from '@/utils/mipsSimulator';
 
 const initialCode = `.data
     hello: .asciiz "Hello, world! This string is from MIPS!\\n"
@@ -76,52 +78,25 @@ const Index = () => {
     setIsRunning(false);
   };
 
-  const handleSaveState = () => {
-    try {
-      const saved = saveState(simulatorState);
-      localStorage.setItem('mips_state', saved);
-      toast({
-        title: "Success",
-        description: "State saved successfully",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to save state",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleLoadState = () => {
-    try {
-      const saved = localStorage.getItem('mips_state');
-      if (saved) {
-        const loadedState = loadState(saved);
-        setSimulatorState(loadedState);
-        toast({
-          title: "Success",
-          description: "State loaded successfully",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to load state",
-        variant: "destructive",
-      });
-    }
-  };
-
   const handleExecute = useCallback(async () => {
     try {
       setIsLoading(true);
+      console.log('Starting execution...');
+      setOutput(prev => `${prev}\nInitializing execution...`);
+      
       // Store current registers state before execution
       const prevRegs = { ...simulatorState.registers };
-
+      
+      // Add artificial delay for better UX
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      console.log('Sending code to simulator...');
+      setOutput(prev => `${prev}\nSending code to simulator...`);
+      
       const result = await simulateCode(code);
 
       if (result.success && result.data) {
+        console.log('Execution successful, processing results...');
         setOutput(result.data.console_output || '');
         
         // Create new state object with the response data
@@ -133,15 +108,16 @@ const Index = () => {
           ...simulatorState,
           registers: newRegisters,
           memory: newMemory,
-          pc: simulatorState.pc + 4,  // Increment PC like in mipsSimulator
-          running: true
+          pc: simulatorState.pc + 4,
+          running: true,
+          previousRegisters: prevRegs
         };
         
-        // Update simulator state and store previous registers
         setSimulatorState(newState);
-        setSimulatorState(prev => {
-          prev.previousRegisters = prevRegs;
-          return prev;
+        
+        toast({
+          title: "Success",
+          description: "Code executed successfully",
         });
       } else {
         throw new Error(result.error || 'Simulation failed');
@@ -171,14 +147,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <nav className="h-16 border-b flex items-center justify-between px-4">
         <h1 className="text-xl font-semibold">MIPS Simulator</h1>
-        <div className="flex gap-2">
-          <button onClick={handleSaveState} className="px-3 py-1 bg-blue-500 text-white rounded">
-            Save State
-          </button>
-          <button onClick={handleLoadState} className="px-3 py-1 bg-green-500 text-white rounded">
-            Load State
-          </button>
-        </div>
+        <AIChatWindow />
       </nav>
 
       <Toolbar 
@@ -192,12 +161,24 @@ const Index = () => {
 
       <div className="grid grid-cols-[2fr,1fr] gap-4 h-[calc(100vh-8rem)]">
         <div className="flex flex-col">
-          <CodeEditor code={code} onChange={setCode} />
-          <ConsoleOutput output={output} />
+          {isLoading ? (
+            <div className="space-y-4 p-4">
+              <Skeleton className="h-[200px] w-full" />
+              <Skeleton className="h-[100px] w-full" />
+            </div>
+          ) : (
+            <>
+              <CodeEditor code={code} onChange={setCode} />
+              <ConsoleOutput output={output} />
+            </>
+          )}
         </div>
         <div className="flex flex-col">
           <div className="flex-1 overflow-auto">
-            <RegistersViewer registers={simulatorState.registers} />
+            <RegistersViewer 
+              registers={simulatorState.registers} 
+              previousRegisters={simulatorState.previousRegisters}
+            />
           </div>
           <MemoryViewer memory={simulatorState.memory} />
         </div>

@@ -1,3 +1,5 @@
+import { API_URL } from '../config/env';
+
 export interface SimulationResponse {
   success: boolean;
   data?: {
@@ -15,6 +17,7 @@ export async function simulateCode(code: string): Promise<SimulationResponse> {
   try {
     console.log('=== Sending simulation request ===');
     console.log('Code:', code);
+    console.log('API URL:', API_URL);
 
     const response = await fetch(`${API_BASE_URL}/api/simulate`, {
       method: 'POST',
@@ -48,4 +51,4 @@ export async function simulateCode(code: string): Promise<SimulationResponse> {
       error: 'Failed to connect to the simulation server. Please try again later.',
     };
   }
-} 
+}

@@ -1,6 +1,6 @@
 import { RegisterMap, Labels, Memory } from '../types/mips';
 
-export interface SimulatorState {
+interface SimulatorState {
   registers: { [key: string]: number };
   previousRegisters: { [key: string]: number };
   memory: { [address: string]: number };
@@ -19,7 +19,7 @@ export const registerMap: { [key: string]: number } = {
   'gp': 28, 'sp': 29, 'fp': 30, 'ra': 31
 };
 
-export type { SimulatorState };  // Export the type
+export type { SimulatorState };  // Single export of the type
 
 export const createInitialState = (): SimulatorState => ({
   registers: Object.keys(registerMap).reduce((acc, key) => {

@@ -102,10 +102,8 @@ const Index = () => {
       console.log('Starting execution...');
       setOutput(prev => `${prev}\nInitializing execution...`);
       
-      // Store current registers state before execution
       const prevRegs = { ...simulatorState.registers };
       
-      // Add artificial delay for better UX
       await new Promise(resolve => setTimeout(resolve, 800));
       
       console.log('Sending code to simulator...');
@@ -117,14 +115,15 @@ const Index = () => {
         console.log('Execution successful, processing results...');
         setOutput(result.data.console_output || '');
         
-        // Create new state object with the response data
-        const newRegisters = result.data.registers || {};
-        const newMemory = result.data.memory || {};
+        // Convert memory values to numbers
+        const newMemory: { [key: string]: number } = {};
+        Object.entries(result.data.memory || {}).forEach(([addr, value]) => {
+          newMemory[addr] = typeof value === 'string' ? parseInt(value, 10) : value;
+        });
         
-        // Update simulator state with new values while preserving structure
-        const newState = {
+        const newState: SimulatorState = {
           ...simulatorState,
-          registers: newRegisters,
+          registers: result.data.registers || {},
           memory: newMemory,
           pc: simulatorState.pc + 4,
           running: true,

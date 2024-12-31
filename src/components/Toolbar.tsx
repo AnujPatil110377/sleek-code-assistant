@@ -7,6 +7,7 @@ interface ToolbarProps {
   onReset?: () => void;
   onCodeChange?: (code: string) => void;
   onStep?: () => void;
+  onAssemble?: () => void;  // Added this prop
   isLoading?: boolean;
   pc?: number;
 }

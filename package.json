@@ -13,6 +13,7 @@
     "test:manual": "ts-node src/examples/manual-test.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.33.1",
     "@hookform/resolvers": "^3.9.0",
     "@monaco-editor/react": "^4.6.0",
     "@radix-ui/react-accordion": "^1.2.0",

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/use-toast'
 import { Bot, Send } from 'lucide-react'
+import { generateClaudeResponse } from '@/services/claudeService'
 
 type Message = {
   role: 'user' | 'ai';
@@ -22,29 +23,28 @@ const AIChatWindow = () => {
 
     try {
       setIsLoading(true)
-      console.log('Sending message:', input)
+      console.log('Sending message to Claude:', input)
       
       const newMessage: Message = { role: 'user', content: input }
       setMessages(prev => [...prev, newMessage])
       setInput('')
 
-      // Simulate AI response with a delay
-      setTimeout(() => {
-        const aiResponse: Message = {
-          role: 'ai',
-          content: "I'm here to help you with the MIPS simulator! You can ask me questions about MIPS assembly, how to use the simulator, or get help debugging your code."
-        }
-        setMessages(prev => [...prev, aiResponse])
-        setIsLoading(false)
-      }, 1000)
+      const claudeResponse = await generateClaudeResponse(input)
+      
+      const aiResponse: Message = {
+        role: 'ai',
+        content: claudeResponse
+      }
+      setMessages(prev => [...prev, aiResponse])
 
     } catch (error) {
       console.error('Error sending message:', error)
       toast({
         title: "Error",
-        description: "Failed to send message. Please try again.",
+        description: "Failed to get response from Claude. Please try again.",
         variant: "destructive"
       })
+    } finally {
       setIsLoading(false)
     }
   }
@@ -71,7 +71,7 @@ const AIChatWindow = () => {
           <div className="flex items-center gap-2 p-4 border-b border-gray-800 bg-gray-800">
             <Bot className="w-6 h-6 text-blue-500" />
             <div className="flex flex-col">
-              <h3 className="text-sm font-medium text-white">MIPS Bot</h3>
+              <h3 className="text-sm font-medium text-white">MIPS Bot (Claude)</h3>
               <span className="text-xs text-green-500">Online</span>
             </div>
             <Button 

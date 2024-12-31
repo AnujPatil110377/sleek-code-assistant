@@ -8,7 +8,8 @@ import AIChatWindow from '@/components/AIChatWindow';
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from '@/components/ui/use-toast';
 import { simulateCode } from '@/utils/api';
-import { createInitialState, parseProgram, executeInstruction, SimulatorState } from '@/utils/mipsSimulator';
+import { createInitialState, parseProgram, executeInstruction } from '@/utils/mipsSimulator';
+import type { SimulatorState } from '@/utils/mipsSimulator';
 
 const initialCode = `.data
     hello: .asciiz "Hello, world! This string is from MIPS!\\n"
@@ -27,6 +28,42 @@ const Index = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+
+  const handleStep = useCallback(() => {
+    try {
+      console.log('Executing single step');
+      const { instructions } = parseProgram(code);
+      const currentInstruction = instructions[simulatorState.pc / 4];
+      
+      if (currentInstruction) {
+        console.log('Current instruction:', currentInstruction);
+        const newState = executeInstruction(simulatorState, currentInstruction);
+        setSimulatorState(newState);
+        setOutput(prev => `${prev}\nExecuted: ${currentInstruction}`);
+        
+        toast({
+          title: "Step Executed",
+          description: `Executed instruction: ${currentInstruction}`,
+        });
+      } else {
+        setIsRunning(false);
+        setOutput(prev => `${prev}\nProgram completed`);
+        toast({
+          title: "Program Complete",
+          description: "No more instructions to execute",
+        });
+      }
+    } catch (error) {
+      console.error('Step execution error:', error);
+      setIsRunning(false);
+      setOutput(`Step execution error: ${error}`);
+      toast({
+        title: "Error",
+        description: `Step execution error: ${error}`,
+        variant: "destructive",
+      });
+    }
+  }, [code, simulatorState, toast]);
 
   const handleAssemble = () => {
     try {
@@ -49,25 +86,6 @@ const Index = () => {
         description: `Assembly error: ${error}`,
         variant: "destructive",
       });
-    }
-  };
-
-  const handleStep = () => {
-    try {
-      const { instructions } = parseProgram(code);
-      const currentInstruction = instructions[simulatorState.pc / 4];
-      if (currentInstruction) {
-        const newState = executeInstruction(simulatorState, currentInstruction);
-        setSimulatorState(newState);
-        setOutput(prev => `${prev}\nExecuted: ${currentInstruction}`);
-      } else {
-        setIsRunning(false);
-        setOutput(prev => `${prev}\nProgram completed`);
-      }
-    } catch (error) {
-      console.error('Execution error:', error);
-      setIsRunning(false);
-      setOutput(`Execution error: ${error}`);
     }
   };
 
@@ -133,15 +151,7 @@ const Index = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [code, simulatorState]);
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isRunning) {
-      interval = setInterval(handleStep, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [isRunning, simulatorState]);
+  }, [code, simulatorState, toast]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -157,21 +167,18 @@ const Index = () => {
         onCodeChange={setCode}
         onExecute={handleExecute}
         isLoading={isLoading}
+        pc={simulatorState.pc}
       />
 
-      <div className="grid grid-cols-[2fr,1fr] gap-4 h-[calc(100vh-8rem)]">
+      <div className={`grid grid-cols-[2fr,1fr] gap-4 h-[calc(100vh-8rem)] relative ${isLoading ? 'opacity-50' : ''}`}>
+        {isLoading && (
+          <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="animate-spin text-4xl">⌛</div>
+          </div>
+        )}
         <div className="flex flex-col">
-          {isLoading ? (
-            <div className="space-y-4 p-4">
-              <Skeleton className="h-[200px] w-full" />
-              <Skeleton className="h-[100px] w-full" />
-            </div>
-          ) : (
-            <>
-              <CodeEditor code={code} onChange={setCode} />
-              <ConsoleOutput output={output} />
-            </>
-          )}
+          <CodeEditor code={code} onChange={setCode} />
+          <ConsoleOutput output={output} />
         </div>
         <div className="flex flex-col">
           <div className="flex-1 overflow-auto">

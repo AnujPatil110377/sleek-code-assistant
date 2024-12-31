@@ -1,6 +1,14 @@
-import { SimulatorState } from '../types/mips';
+import { RegisterMap, Labels, Memory } from '../types/mips';
 
-// MIPS Register mapping
+export interface SimulatorState {
+  registers: { [key: string]: number };
+  previousRegisters: { [key: string]: number };
+  memory: { [address: string]: number };
+  pc: number;
+  running: boolean;
+  labels: { [key: string]: number };
+}
+
 export const registerMap: { [key: string]: number } = {
   'zero': 0, 'at': 1,
   'v0': 2, 'v1': 3,

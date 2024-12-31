@@ -576,7 +576,7 @@ def syscall(reg, memory, output_capture):
         output_capture.write(f"Unknown syscall: {syscall_num}\n")
     return True
 
-# Modified simulation function to return results instead of printing
+# Modified simulation function to return results including PC value
 def run_simulation(parsed_instructions, labels, memory):
     output_capture = OutputCapture()
     reg = {name: 0 for name in reg_map}
@@ -739,7 +739,7 @@ def run_simulation(parsed_instructions, labels, memory):
             output_capture.write(f"Error executing instruction: {current_instruction} -> {e}\n")
             break
 
-        pc += 4
+        pc += 4  # Increment PC after executing the instruction
 
     # Convert memory values to strings for JSON serialization
     memory_output = {hex(addr): str(value) for addr, value in memory.items()}
@@ -747,7 +747,8 @@ def run_simulation(parsed_instructions, labels, memory):
     return {
         'registers': reg,
         'memory': memory_output,
-        'console_output': output_capture.get_output()
+        'console_output': output_capture.get_output(),
+        'pc': pc  # Return the final PC value
     }
 
 @app.route('/api/simulate', methods=['POST'])

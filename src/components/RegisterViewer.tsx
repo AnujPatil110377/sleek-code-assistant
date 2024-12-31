@@ -30,8 +30,8 @@ const RegisterViewer = ({ registers, previousRegisters }: RegisterViewerProps) =
               {Object.entries(registers).map(([name, value]) => (
                 <tr 
                   key={name} 
-                  className={`border-b border-gray-700 ${
-                    hasChanged(name) ? 'bg-blue-900 bg-opacity-30' : ''
+                  className={`border-b border-gray-700 transition-colors duration-500 ${
+                    hasChanged(name) ? 'bg-blue-900 bg-opacity-30 animate-pulse' : ''
                   }`}
                 >
                   <td className="p-1 text-blue-400 sticky left-0 bg-gray-800">
@@ -53,4 +53,4 @@ const RegisterViewer = ({ registers, previousRegisters }: RegisterViewerProps) =
   );
 };
 
-export default RegisterViewer; 
+export default RegisterViewer;

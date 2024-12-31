@@ -10,6 +10,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { simulateCode } from '@/utils/api';
 import { createInitialState, parseProgram, executeInstruction } from '@/utils/mipsSimulator';
 import type { SimulatorState } from '@/utils/mipsSimulator';
+import axios from 'axios';
 
 const initialCode = `.data
     hello: .asciiz "Hello, world! This string is from MIPS!\\n"
@@ -28,44 +29,114 @@ const Index = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [nextInstruction, setNextInstruction] = useState<string | null>(null);
+  const [previousRegisters, setPreviousRegisters] = useState<{[key: string]: number}>({});
 
-  const handleStep = useCallback(() => {
+  const initializeStepExecution = useCallback(async () => {
     try {
-      console.log('Executing single step');
-      const { instructions } = parseProgram(code);
-      const currentInstruction = instructions[simulatorState.pc / 4];
-      
-      if (currentInstruction) {
-        console.log('Current instruction:', currentInstruction);
-        const newState = executeInstruction(simulatorState, currentInstruction);
-        setSimulatorState(newState);
-        setOutput(prev => `${prev}\nExecuted: ${currentInstruction}`);
+      setIsLoading(true);
+      const response = await axios.post('https://anujpatil.pythonanywhere.com/api/init-step', {
+        code
+      });
+
+      if (response.data.success) {
+        setSessionId(response.data.session_id);
+        
+        // Initialize with default register values, maintaining stack pointer
+        const defaultRegisters = {
+          'zero': 0, 'at': 0,
+          'v0': 0, 'v1': 0,
+          'a0': 0, 'a1': 0, 'a2': 0, 'a3': 0,
+          't0': 0, 't1': 0, 't2': 0, 't3': 0,
+          't4': 0, 't5': 0, 't6': 0, 't7': 0,
+          's0': 0, 's1': 0, 's2': 0, 's3': 0,
+          's4': 0, 's5': 0, 's6': 0, 's7': 0,
+          't8': 0, 't9': 0, 'k0': 0, 'k1': 0,
+          'gp': 0, 'sp': simulatorState.registers.sp || 0x7FFFFFFC, 'fp': 0, 'ra': 0
+        };
+
+        setSimulatorState(prev => ({
+          ...prev,
+          registers: defaultRegisters,
+          memory: {},
+          pc: 0
+        }));
+        setOutput('');
+        setPreviousRegisters(defaultRegisters);
+        setNextInstruction(null);
         
         toast({
-          title: "Step Executed",
-          description: `Executed instruction: ${currentInstruction}`,
-        });
-      } else {
-        setIsRunning(false);
-        setOutput(prev => `${prev}\nProgram completed`);
-        toast({
-          title: "Program Complete",
-          description: "No more instructions to execute",
+          title: "Ready",
+          description: "Step execution initialized successfully",
         });
       }
     } catch (error) {
-      console.error('Step execution error:', error);
-      setIsRunning(false);
-      setOutput(`Step execution error: ${error}`);
+      console.error('Error initializing step execution:', error);
       toast({
         title: "Error",
-        description: `Step execution error: ${error}`,
+        description: "Failed to initialize step execution",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
-  }, [code, simulatorState, toast]);
+  }, [code, toast, simulatorState.registers.sp]);
 
-  const handleAssemble = () => {
+  const handleStep = useCallback(async () => {
+    if (!sessionId) {
+      await initializeStepExecution();
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      
+      const response = await axios.post('https://anujpatil.pythonanywhere.com/api/step', {
+        session_id: sessionId
+      });
+
+      if (response.data.success) {
+        if (response.data.completed) {
+          toast({
+            title: "Complete",
+            description: "Program execution completed",
+          });
+          setSessionId(null);
+          return;
+        }
+
+        const { data } = response.data;
+        
+        // Store current registers as previous before updating
+        setPreviousRegisters(simulatorState.registers);
+        
+        setSimulatorState(prev => ({
+          ...prev,
+          registers: data.registers,
+          memory: data.memory,
+          pc: data.pc
+        }));
+        
+        if (data.console_output) {
+          setOutput(prev => prev + data.console_output);
+        }
+
+        setNextInstruction(data.current_instruction);
+      }
+    } catch (error) {
+      console.error('Step execution error:', error);
+      toast({
+        title: "Error",
+        description: error.response?.data?.error || 'Error executing step',
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [sessionId, simulatorState, code, toast, initializeStepExecution]);
+
+  const handleAssemble = useCallback(() => {
     try {
       console.log('Assembling code:', code);
       const { instructions, labels } = parseProgram(code);
@@ -87,14 +158,15 @@ const Index = () => {
         variant: "destructive",
       });
     }
-  };
+  }, [code, toast]);
 
-  const handleReset = () => {
-    console.log('Resetting simulator');
+  const handleReset = useCallback(() => {
+    setSessionId(null);
+    setNextInstruction(null);
     setSimulatorState(createInitialState());
     setOutput('');
-    setIsRunning(false);
-  };
+    setPreviousRegisters({});
+  }, []);
 
   const handleExecute = useCallback(async () => {
     try {
@@ -121,13 +193,14 @@ const Index = () => {
           newMemory[addr] = typeof value === 'string' ? parseInt(value, 10) : value;
         });
         
+        setPreviousRegisters(prevRegs);
+        
         const newState: SimulatorState = {
           ...simulatorState,
           registers: result.data.registers || {},
           memory: newMemory,
-          pc: simulatorState.pc + 4,
-          running: true,
-          previousRegisters: prevRegs
+          pc: result.data.pc || simulatorState.pc + 4,
+          running: true
         };
         
         setSimulatorState(newState);
@@ -167,6 +240,7 @@ const Index = () => {
         onExecute={handleExecute}
         isLoading={isLoading}
         pc={simulatorState.pc}
+        nextInstruction={nextInstruction}
       />
 
       <div className={`grid grid-cols-[2fr,1fr] gap-4 h-[calc(100vh-8rem)] relative ${isLoading ? 'opacity-50' : ''}`}>
@@ -183,7 +257,7 @@ const Index = () => {
           <div className="flex-1 overflow-auto">
             <RegistersViewer 
               registers={simulatorState.registers} 
-              previousRegisters={simulatorState.previousRegisters}
+              previousRegisters={previousRegisters}
             />
           </div>
           <MemoryViewer memory={simulatorState.memory} />

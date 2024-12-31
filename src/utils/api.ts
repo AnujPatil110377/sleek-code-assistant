@@ -10,7 +10,7 @@ export interface SimulationResponse {
   };
   error?: string;
 }
-
+ //https://anujpatil.pythonanywhere.com
 const API_BASE_URL ='https://anujpatil.pythonanywhere.com'  // Replace with your actual production URL
     
 

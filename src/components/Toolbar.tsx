@@ -7,9 +7,10 @@ interface ToolbarProps {
   onReset?: () => void;
   onCodeChange?: (code: string) => void;
   onStep?: () => void;
-  onAssemble?: () => void;  // Added this prop
+  onAssemble?: () => void;
   isLoading?: boolean;
   pc?: number;
+  nextInstruction?: string | null;
 }
 
 const Toolbar = (props: ToolbarProps) => {
@@ -152,6 +153,13 @@ const Toolbar = (props: ToolbarProps) => {
         <span className="text-sm text-gray-300 mr-2">PC:</span>
         <span className="font-mono text-blue-400">{props.pc || 0}</span>
       </div>
+
+      {props.nextInstruction && (
+        <div className="ml-4 px-3 py-1 bg-gray-700 rounded-md flex items-center flex-1">
+          <span className="text-sm text-gray-300 mr-2">Next:</span>
+          <span className="font-mono text-green-400">{props.nextInstruction}</span>
+        </div>
+      )}
     </div>
   );
 };

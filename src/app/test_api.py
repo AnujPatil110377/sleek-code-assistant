@@ -92,5 +92,139 @@ class TestMIPSSimulator(unittest.TestCase):
         self.assertTrue(data['success'])
         self.assertEqual(data['data']['registers']['t0'], 42)
 
+    def test_step_execution_initialization(self):
+        # Test case 5: Initialize step execution
+        test_code = '''
+.text
+    addi $t0, $zero, 5    # t0 = 5
+    addi $t1, $zero, 3    # t1 = 3
+    add $t2, $t0, $t1     # t2 = t0 + t1
+        '''
+        
+        # Test initialization
+        response = self.app.post('/api/init-step',
+                               data=json.dumps({'code': test_code}),
+                               content_type='application/json')
+        
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        
+        self.assertTrue(data['success'])
+        self.assertIn('session_id', data)
+        self.assertEqual(data['total_instructions'], 3)
+        
+        return data['session_id']
+
+    def test_step_execution(self):
+        # First initialize the session
+        session_id = self.test_step_execution_initialization()
+        
+        # Test first step (addi $t0, $zero, 5)
+        response = self.app.post('/api/step',
+                               data=json.dumps({'session_id': session_id}),
+                               content_type='application/json')
+        
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        
+        self.assertTrue(data['success'])
+        self.assertFalse(data['completed'])
+        self.assertEqual(data['data']['registers']['t0'], 5)
+        self.assertEqual(data['data']['pc'], 4)
+        self.assertEqual(data['data']['current_instruction'].strip(), 'addi $t0, $zero, 5')
+        
+        # Test second step (addi $t1, $zero, 3)
+        response = self.app.post('/api/step',
+                               data=json.dumps({'session_id': session_id}),
+                               content_type='application/json')
+        
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        
+        self.assertTrue(data['success'])
+        self.assertFalse(data['completed'])
+        self.assertEqual(data['data']['registers']['t1'], 3)
+        self.assertEqual(data['data']['pc'], 8)
+        self.assertEqual(data['data']['current_instruction'].strip(), 'addi $t1, $zero, 3')
+        
+        # Test final step (add $t2, $t0, $t1)
+        response = self.app.post('/api/step',
+                               data=json.dumps({'session_id': session_id}),
+                               content_type='application/json')
+        
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        
+        self.assertTrue(data['success'])
+        self.assertFalse(data['completed'])
+        self.assertEqual(data['data']['registers']['t2'], 8)
+        self.assertEqual(data['data']['pc'], 12)
+        self.assertEqual(data['data']['current_instruction'].strip(), 'add $t2, $t0, $t1')
+        
+        # Test stepping after program completion
+        response = self.app.post('/api/step',
+                               data=json.dumps({'session_id': session_id}),
+                               content_type='application/json')
+        
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        
+        self.assertTrue(data['success'])
+        self.assertTrue(data['completed'])
+
+    def test_step_invalid_session(self):
+        # Test stepping with invalid session ID
+        response = self.app.post('/api/step',
+                               data=json.dumps({'session_id': 'invalid_session_id'}),
+                               content_type='application/json')
+        
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.data)
+        
+        self.assertFalse(data['success'])
+        self.assertIn('error', data)
+        self.assertEqual(data['error'], 'Invalid session')
+
+    def test_step_complex_program(self):
+        # Test case with a more complex program including memory operations and syscalls
+        test_code = '''
+.data
+    message: .asciiz "Test\\n"
+
+.text
+    # Print string
+    li $v0, 4
+    la $a0, message
+    syscall
+        '''
+        
+        # Initialize stepping
+        response = self.app.post('/api/init-step',
+                               data=json.dumps({'code': test_code}),
+                               content_type='application/json')
+        
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        session_id = data['session_id']
+        
+        # Step through each instruction
+        output = ''
+        completed = False
+        while not completed:
+            response = self.app.post('/api/step',
+                                   data=json.dumps({'session_id': session_id}),
+                                   content_type='application/json')
+            
+            self.assertEqual(response.status_code, 200)
+            data = json.loads(response.data)
+            
+            if data['completed']:
+                completed = True
+            else:
+                if 'console_output' in data['data']:
+                    output += data['data']['console_output']
+        
+        self.assertEqual(output.strip(), "Test")
+
 if __name__ == '__main__':
     unittest.main() 

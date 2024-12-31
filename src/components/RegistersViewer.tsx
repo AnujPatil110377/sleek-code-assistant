@@ -4,10 +4,18 @@ import { Input } from '@/components/ui/input';
 interface RegistersViewerProps {
   registers: { [key: string]: number };
   previousRegisters: { [key: string]: number };
+  changedRegisters?: { [key: string]: number };
   onRegisterChange?: (name: string, value: number) => void;
+  showChanges?: boolean;
 }
 
-const RegistersViewer = ({ registers, previousRegisters, onRegisterChange }: RegistersViewerProps) => {
+const RegistersViewer = ({ 
+  registers, 
+  previousRegisters, 
+  changedRegisters,
+  onRegisterChange,
+  showChanges = true 
+}: RegistersViewerProps) => {
   const [editingRegister, setEditingRegister] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
 
@@ -27,8 +35,23 @@ const RegistersViewer = ({ registers, previousRegisters, onRegisterChange }: Reg
   };
 
   const hasChanged = (name: string) => {
-    return previousRegisters[name] !== undefined && 
-           previousRegisters[name] !== registers[name];
+    if (!showChanges) return false;
+    if (name === 'sp') return false;
+    return changedRegisters ? name in changedRegisters : 
+           (previousRegisters[name] !== undefined && 
+            previousRegisters[name] !== registers[name]);
+  };
+
+  const getRegisterDisplay = (name: string, value: number) => {
+    if (hasChanged(name)) {
+      return (
+        <div className="flex items-center gap-2">
+          <span className="text-gray-400 line-through">{previousRegisters[name]}</span>
+          <span className="text-teal-400">{value}</span>
+        </div>
+      );
+    }
+    return <span className="text-teal-400">{value}</span>;
   };
 
   const registersList = Object.entries(registers);
@@ -73,12 +96,7 @@ const RegistersViewer = ({ registers, previousRegisters, onRegisterChange }: Reg
                       </button>
                     </div>
                   ) : (
-                    <span
-                      className="text-teal-400 cursor-pointer hover:text-teal-300"
-                      onClick={() => handleEdit(name)}
-                    >
-                      {value}
-                    </span>
+                    getRegisterDisplay(name, value)
                   )}
                 </td>
               </tr>
@@ -119,12 +137,7 @@ const RegistersViewer = ({ registers, previousRegisters, onRegisterChange }: Reg
                       </button>
                     </div>
                   ) : (
-                    <span
-                      className="text-teal-400 cursor-pointer hover:text-teal-300"
-                      onClick={() => handleEdit(name)}
-                    >
-                      {value}
-                    </span>
+                    getRegisterDisplay(name, value)
                   )}
                 </td>
               </tr>

@@ -1,8 +1,9 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, session
 from flask_cors import CORS  # Add CORS support
 import re
 from io import StringIO
 import sys
+import uuid
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -19,6 +20,9 @@ reg_map = {
     't8':24,  't9':25,  'k0':26,  'k1':27,
     'gp':28,  'sp':29,  'fp':30,  'ra':31
 }
+
+# Add a dictionary to store execution states
+execution_states = {}
 
 # Original helper functions remain the same
 def get_register_number(reg_name):
@@ -382,197 +386,6 @@ def syscall(reg, memory, output_capture):
         output_capture.write(f"Unknown syscall: {syscall_num}\n")
     return True
 
-
-    reg = {name: 0 for name in reg_map}
-    reg['zero'] = 0  # Ensure $zero is always 0
-    reg['sp'] = 0x7FFFFFFC  # Initialize $sp (Stack Pointer)
-    pc = 0
-    sim_mode = input("Enter 'n' for single instruction mode, 'a' for automatic mode: ")
-    single_step = (sim_mode == 'n')
-
-    # Prepare the instructions in order including expanded instructions for 'li' and 'la'
-    instructions_list = []
-    pc_counter = 0
-    for inst in parsed_instructions:
-        bin_inst = convert_to_binary(inst, labels, pc_counter)
-        if bin_inst:
-            if isinstance(bin_inst, list):
-                # For 'li' and 'la' that expand into multiple instructions
-                for bi in bin_inst:
-                    instructions_list.append((inst, bi, pc_counter))
-                    pc_counter += 4
-            else:
-                instructions_list.append((inst, bin_inst, pc_counter))
-                pc_counter += 4
-        else:
-            instructions_list.append((inst, None, pc_counter))
-            pc_counter += 4
-
-    # Convert the instructions_list to a dictionary for easy PC lookup
-    inD = {pc: (inst, mc) for inst, mc, pc in instructions_list}
-
-    while pc in inD:
-        current_instruction, mc = inD[pc]
-        parts = re.split(r'[,\s()]+', current_instruction)
-        parts = [p for p in parts if p]  # Remove empty strings
-        op_code = parts[0]
-
-        # Generate control signals
-        try:
-            control_signals = generate_control_signals(op_code)
-        except ValueError as e:
-            print(f"Error: {e}")
-            break
-
-        if single_step:
-            print("\n" + "=" * 80)
-            print("Executing Instruction:")
-            print("Assembly Code:", current_instruction)
-            if mc:
-                print("Machine Code:", mc)
-            else:
-                print("Machine Code: N/A")
-            print("PC before execution:", pc)
-            print("Control Signals:", control_signals)
-
-        try:
-            # Handle syscall separately
-            if op_code == 'syscall':
-                if not syscall(reg, memory):
-                    break
-            elif control_signals['Jump']:
-                if op_code == 'j' or op_code == 'jal':
-                    label = parts[1]
-                    if label in labels:
-                        if op_code == 'jal':
-                            reg['ra'] = pc + 4  # Save return address
-                        pc = labels[label]
-                        continue
-                    else:
-                        raise ValueError(f"Label {label} not found")
-                elif op_code == 'jr':
-                    rs_name = get_register_name(get_register_number(parts[1]))
-                    pc = reg[rs_name]
-                    continue
-            elif control_signals['Branch']:
-                rs_name = get_register_name(get_register_number(parts[1]))
-                rt_name = get_register_name(get_register_number(parts[2]))
-                label = parts[3]
-                if op_code == 'beq' and reg[rs_name] == reg[rt_name]:
-                    pc = labels[label]
-                    continue
-                elif op_code == 'bne' and reg[rs_name] != reg[rt_name]:
-                    pc = labels[label]
-                    continue
-            else:
-                ALU_result = 0
-                if control_signals['ALUSrc']:
-                    if op_code in ['addi', 'andi', 'ori']:
-                        rt_name = get_register_name(get_register_number(parts[1]))
-                        rs_name = get_register_name(get_register_number(parts[2]))
-                        imm = int(parts[3])
-                        if op_code == 'addi':
-                            ALU_result = reg[rs_name] + imm
-                        elif op_code == 'andi':
-                            ALU_result = reg[rs_name] & imm
-                        elif op_code == 'ori':
-                            ALU_result = reg[rs_name] | imm
-                        if control_signals['RegWrite']:
-                            reg[rt_name] = ALU_result
-                    elif op_code == 'lui':
-                        rt_name = get_register_name(get_register_number(parts[1]))
-                        imm = int(parts[2])
-                        if control_signals['RegWrite']:
-                            reg[rt_name] = imm << 16
-                    elif op_code == 'li':
-                        rd_name = get_register_name(get_register_number(parts[1]))
-                        imm = int(parts[2])
-                        if control_signals['RegWrite']:
-                            reg[rd_name] = imm
-                    elif op_code == 'lw':
-                        rt_name = get_register_name(get_register_number(parts[1]))
-                        if len(parts) == 4:
-                            offset = int(parts[2])
-                            base_name = get_register_name(get_register_number(parts[3]))
-                            address = reg[base_name] + offset
-                        elif len(parts) == 3:
-                            # lw rt, label
-                            label = parts[2]
-                            address = labels.get(label)
-                            if address is None:
-                                raise ValueError(f"Label {label} not found")
-                        else:
-                            raise ValueError("Invalid lw instruction format")
-                        if control_signals['MemRead']:
-                            data = memory.get(address, 0)
-                            if control_signals['RegWrite']:
-                                reg[rt_name] = data
-                    elif op_code == 'sw':
-                        rt_name = get_register_name(get_register_number(parts[1]))
-                        if len(parts) == 4:
-                            offset = int(parts[2])
-                            base_name = get_register_name(get_register_number(parts[3]))
-                            address = reg[base_name] + offset
-                        elif len(parts) == 3:
-                            label = parts[2]
-                            address = labels.get(label)
-                            if address is None:
-                                raise ValueError(f"Label {label} not found")
-                        else:
-                            raise ValueError("Invalid sw instruction format")
-                        if control_signals['MemWrite']:
-                            memory[address] = reg[rt_name]
-                else:
-                    # ALU operations with register operands
-                    rd_name = get_register_name(get_register_number(parts[1]))
-                    rs_name = get_register_name(get_register_number(parts[2]))
-                    rt_name = get_register_name(get_register_number(parts[3]))
-                    if op_code == 'add':
-                        ALU_result = reg[rs_name] + reg[rt_name]
-                    elif op_code == 'sub':
-                        ALU_result = reg[rs_name] - reg[rt_name]
-                    elif op_code == 'and':
-                        ALU_result = reg[rs_name] & reg[rt_name]
-                    elif op_code == 'or':
-                        ALU_result = reg[rs_name] | reg[rt_name]
-                    elif op_code == 'slt':
-                        ALU_result = 1 if reg[rs_name] < reg[rt_name] else 0
-                    elif op_code == 'mul':
-                        ALU_result = reg[rs_name] * reg[rt_name]
-                    elif op_code == 'xor':
-                        ALU_result = reg[rs_name] ^ reg[rt_name]
-                    elif op_code == 'nor':
-                        ALU_result = ~(reg[rs_name] | reg[rt_name])
-                    elif op_code == 'sll':
-                        rt_name = get_register_name(get_register_number(parts[2]))
-                        shamt = int(parts[3])
-                        ALU_result = reg[rt_name] << shamt
-                    elif op_code == 'srl':
-                        rt_name = get_register_name(get_register_number(parts[2]))
-                        shamt = int(parts[3])
-                        ALU_result = reg[rt_name] >> shamt
-                    else:
-                        raise ValueError(f"Unsupported ALU operation {op_code}")
-                    if control_signals['RegWrite']:
-                        reg[rd_name] = ALU_result
-        except Exception as e:
-            print(f"Error executing instruction: {current_instruction} -> {e}")
-            break
-
-        if single_step:
-            display_registers(reg)
-            # Optionally display memory
-            # display_memory(memory)
-            print("PC after execution:", pc + 4)
-            input("Press Enter to continue...")
-
-        pc += 4
-
-    if not single_step:
-        display_registers(reg)
-        # Optionally display memory if needed
-        # display_memory(memory)
-
 # Modified syscall to capture output
 class OutputCapture:
     def __init__(self):
@@ -781,6 +594,26 @@ def simulate_mips():
         
         try:
             parsed_instructions, labels, memory = parse_labels_and_instructions(instructions)
+            
+            # Validate instructions before execution
+            for instruction in parsed_instructions:
+                parts = re.split(r'[,\s()]+', instruction)
+                parts = [p for p in parts if p]
+                if not parts:
+                    return jsonify({
+                        'success': False,
+                        'error': 'Empty instruction found'
+                    }), 400
+                    
+                op_code = parts[0]
+                try:
+                    control_signals = generate_control_signals(op_code)
+                except ValueError as e:
+                    return jsonify({
+                        'success': False,
+                        'error': f"Invalid instruction: {str(e)}"
+                    }), 400
+            
             results = run_simulation(parsed_instructions, labels, memory)
             
             return jsonify({
@@ -793,7 +626,7 @@ def simulate_mips():
             return jsonify({
                 'success': False,
                 'error': str(e)
-            }), 500
+            }), 400
 
     except Exception as e:
         # Handle unexpected errors
@@ -818,6 +651,282 @@ def not_found(e):
 @app.errorhandler(500)
 def server_error(e):
     return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/init-step', methods=['POST'])
+def init_step():
+    """Initialize stepping execution"""
+    try:
+        data = request.get_json()
+        if 'code' not in data:
+            return jsonify({'success': False, 'error': 'No code provided'}), 400
+
+        # Parse the code and prepare initial state
+        content = data['code']
+        instructions = read_asm_content(content)
+        parsed_instructions, labels, memory = parse_labels_and_instructions(instructions)
+        
+        # Create initial state
+        session_state = {
+            'instructions': parsed_instructions,
+            'labels': labels,
+            'memory': memory,
+            'pc': 0,
+            'registers': {name: 0 for name in reg_map},
+            'output_buffer': '',
+            'instruction_index': 0
+        }
+        
+        # Generate unique session ID
+        session_id = str(uuid.uuid4())
+        execution_states[session_id] = session_state
+        
+        return jsonify({
+            'success': True,
+            'session_id': session_id,
+            'total_instructions': len(parsed_instructions)
+        }), 200
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/step', methods=['POST'])
+def step_instruction():
+    """Execute next instruction in the stepping sequence"""
+    try:
+        data = request.get_json()
+        session_id = data.get('session_id')
+        
+        if not session_id or session_id not in execution_states:
+            return jsonify({'success': False, 'error': 'Invalid session'}), 400
+            
+        state = execution_states[session_id]
+        
+        if state['instruction_index'] >= len(state['instructions']):
+            return jsonify({
+                'success': True,
+                'completed': True,
+                'message': 'Program execution completed'
+            }), 200
+            
+        # Get current instruction
+        current_instruction = state['instructions'][state['instruction_index']]
+        
+        # Execute single instruction
+        output_capture = OutputCapture()
+        
+        # Parse instruction
+        parts = re.split(r'[,\s()]+', current_instruction)
+        parts = [p for p in parts if p]
+        
+        if not parts:
+            return jsonify({
+                'success': False,
+                'error': 'Empty instruction'
+            }), 400
+            
+        op_code = parts[0]
+        
+        try:
+            control_signals = generate_control_signals(op_code)
+            
+            # Initialize registers if not present
+            if 'registers' not in state:
+                state['registers'] = {name: 0 for name in reg_map}
+                state['registers']['sp'] = 0x7FFFFFFC
+            
+            # Execute instruction
+            if control_signals['LoadAddress']:  # Handle la instruction
+                rt_name = get_register_name(get_register_number(parts[1]))
+                label = parts[2].strip()
+                if label not in state['labels']:
+                    raise ValueError(f"Label {label} not found")
+                state['registers'][rt_name] = state['labels'][label]
+            elif control_signals['Syscall']:
+                if not syscall(state['registers'], state['memory'], output_capture):
+                    state['completed'] = True
+            elif control_signals['Jump']:
+                if op_code == 'j' or op_code == 'jal':
+                    label = parts[1]
+                    if label in state['labels']:
+                        if op_code == 'jal':
+                            state['registers']['ra'] = state['pc'] + 4
+                        state['pc'] = state['labels'][label]
+                        state['instruction_index'] = state['pc'] // 4
+                        return jsonify({
+                            'success': True,
+                            'completed': False,
+                            'data': {
+                                'registers': state['registers'],
+                                'memory': state['memory'],
+                                'pc': state['pc'],
+                                'console_output': output_capture.get_output(),
+                                'current_instruction': current_instruction
+                            }
+                        }), 200
+                elif op_code == 'jr':
+                    rs_name = get_register_name(get_register_number(parts[1]))
+                    state['pc'] = state['registers'][rs_name]
+                    state['instruction_index'] = state['pc'] // 4
+                    return jsonify({
+                        'success': True,
+                        'completed': False,
+                        'data': {
+                            'registers': state['registers'],
+                            'memory': state['memory'],
+                            'pc': state['pc'],
+                            'console_output': output_capture.get_output(),
+                            'current_instruction': current_instruction
+                        }
+                    }), 200
+            elif control_signals['Branch']:
+                rs_name = get_register_name(get_register_number(parts[1]))
+                rt_name = get_register_name(get_register_number(parts[2]))
+                label = parts[3]
+                if op_code == 'beq' and state['registers'][rs_name] == state['registers'][rt_name]:
+                    state['pc'] = state['labels'][label]
+                    state['instruction_index'] = state['pc'] // 4
+                    return jsonify({
+                        'success': True,
+                        'completed': False,
+                        'data': {
+                            'registers': state['registers'],
+                            'memory': state['memory'],
+                            'pc': state['pc'],
+                            'console_output': output_capture.get_output(),
+                            'current_instruction': current_instruction
+                        }
+                    }), 200
+                elif op_code == 'bne' and state['registers'][rs_name] != state['registers'][rt_name]:
+                    state['pc'] = state['labels'][label]
+                    state['instruction_index'] = state['pc'] // 4
+                    return jsonify({
+                        'success': True,
+                        'completed': False,
+                        'data': {
+                            'registers': state['registers'],
+                            'memory': state['memory'],
+                            'pc': state['pc'],
+                            'console_output': output_capture.get_output(),
+                            'current_instruction': current_instruction
+                        }
+                    }), 200
+            else:
+                ALU_result = 0
+                if control_signals['ALUSrc']:
+                    if op_code in ['addi', 'andi', 'ori']:
+                        rt_name = get_register_name(get_register_number(parts[1]))
+                        rs_name = get_register_name(get_register_number(parts[2]))
+                        imm = int(parts[3])
+                        if op_code == 'addi':
+                            ALU_result = state['registers'][rs_name] + imm
+                        elif op_code == 'andi':
+                            ALU_result = state['registers'][rs_name] & imm
+                        elif op_code == 'ori':
+                            ALU_result = state['registers'][rs_name] | imm
+                        if control_signals['RegWrite']:
+                            state['registers'][rt_name] = ALU_result
+                    elif op_code == 'lui':
+                        rt_name = get_register_name(get_register_number(parts[1]))
+                        imm = int(parts[2])
+                        if control_signals['RegWrite']:
+                            state['registers'][rt_name] = imm << 16
+                    elif op_code == 'li':
+                        rd_name = get_register_name(get_register_number(parts[1]))
+                        imm = int(parts[2])
+                        if control_signals['RegWrite']:
+                            state['registers'][rd_name] = imm
+                    elif op_code == 'lw':
+                        rt_name = get_register_name(get_register_number(parts[1]))
+                        if len(parts) == 4:
+                            offset = int(parts[2])
+                            base_name = get_register_name(get_register_number(parts[3]))
+                            address = state['registers'][base_name] + offset
+                        elif len(parts) == 3:
+                            label = parts[2]
+                            address = state['labels'].get(label)
+                            if address is None:
+                                raise ValueError(f"Label {label} not found")
+                        else:
+                            raise ValueError("Invalid lw instruction format")
+                        if control_signals['MemRead']:
+                            data = state['memory'].get(address, 0)
+                            if control_signals['RegWrite']:
+                                state['registers'][rt_name] = data
+                    elif op_code == 'sw':
+                        rt_name = get_register_name(get_register_number(parts[1]))
+                        if len(parts) == 4:
+                            offset = int(parts[2])
+                            base_name = get_register_name(get_register_number(parts[3]))
+                            address = state['registers'][base_name] + offset
+                        elif len(parts) == 3:
+                            label = parts[2]
+                            address = state['labels'].get(label)
+                            if address is None:
+                                raise ValueError(f"Label {label} not found")
+                        else:
+                            raise ValueError("Invalid sw instruction format")
+                        if control_signals['MemWrite']:
+                            state['memory'][address] = state['registers'][rt_name]
+                else:
+                    rd_name = get_register_name(get_register_number(parts[1]))
+                    rs_name = get_register_name(get_register_number(parts[2]))
+                    rt_name = get_register_name(get_register_number(parts[3]))
+                    if op_code == 'add':
+                        ALU_result = state['registers'][rs_name] + state['registers'][rt_name]
+                    elif op_code == 'sub':
+                        ALU_result = state['registers'][rs_name] - state['registers'][rt_name]
+                    elif op_code == 'and':
+                        ALU_result = state['registers'][rs_name] & state['registers'][rt_name]
+                    elif op_code == 'or':
+                        ALU_result = state['registers'][rs_name] | state['registers'][rt_name]
+                    elif op_code == 'slt':
+                        ALU_result = 1 if state['registers'][rs_name] < state['registers'][rt_name] else 0
+                    elif op_code == 'mul':
+                        ALU_result = state['registers'][rs_name] * state['registers'][rt_name]
+                    elif op_code == 'xor':
+                        ALU_result = state['registers'][rs_name] ^ state['registers'][rt_name]
+                    elif op_code == 'nor':
+                        ALU_result = ~(state['registers'][rs_name] | state['registers'][rt_name])
+                    elif op_code == 'sll':
+                        rt_name = get_register_name(get_register_number(parts[2]))
+                        shamt = int(parts[3])
+                        ALU_result = state['registers'][rt_name] << shamt
+                    elif op_code == 'srl':
+                        rt_name = get_register_name(get_register_number(parts[2]))
+                        shamt = int(parts[3])
+                        ALU_result = state['registers'][rt_name] >> shamt
+                    else:
+                        raise ValueError(f"Unsupported ALU operation {op_code}")
+                    if control_signals['RegWrite']:
+                        state['registers'][rd_name] = ALU_result
+
+            # Update PC and instruction index
+            state['pc'] += 4
+            state['instruction_index'] += 1
+            
+            return jsonify({
+                'success': True,
+                'completed': False,
+                'data': {
+                    'registers': state['registers'],
+                    'memory': state['memory'],
+                    'pc': state['pc'],
+                    'console_output': output_capture.get_output(),
+                    'current_instruction': current_instruction
+                }
+            }), 200
+            
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'error': f"Error executing instruction: {str(e)}"
+            }), 500
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f"Internal server error: {str(e)}"
+        }), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

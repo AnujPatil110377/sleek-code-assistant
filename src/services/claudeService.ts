@@ -3,6 +3,7 @@ import { SimulatorState } from '@/utils/mipsSimulator';
 
 const anthropic = new Anthropic({
   apiKey: import.meta.env.VITE_ANTHROPIC_API_KEY,
+  dangerouslyAllowBrowser: true, // Add this line to allow browser usage
 });
 
 export async function generateClaudeResponse(

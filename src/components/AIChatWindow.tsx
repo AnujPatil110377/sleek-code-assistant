@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/use-toast'
+import { Bot, Send } from 'lucide-react'
 
 type Message = {
   role: 'user' | 'ai';
@@ -23,12 +24,8 @@ const AIChatWindow = () => {
       setIsLoading(true)
       console.log('Sending message:', input)
       
-      // Add user message to chat with proper typing
-      const newMessages: Message[] = [
-        ...messages,
-        { role: 'user' as const, content: input }
-      ]
-      setMessages(newMessages)
+      const newMessage: Message = { role: 'user', content: input }
+      setMessages(prev => [...prev, newMessage])
       setInput('')
 
       // Simulate AI response with a delay
@@ -63,25 +60,37 @@ const AIChatWindow = () => {
     <div className="fixed top-4 right-4 z-50">
       <Button
         onClick={() => setIsOpen(!isOpen)}
-        className="bg-green-600 hover:bg-green-700 text-white rounded-full p-2 shadow-lg"
+        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full px-4 py-2 shadow-lg"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-        </svg>
+        <Bot className="w-5 h-5" />
+        <span className="text-sm font-medium">MIPS Bot</span>
       </Button>
 
       {isOpen && (
-        <div className="absolute top-12 right-0 w-96 h-[500px] bg-gray-800 rounded-lg shadow-xl border border-gray-700 flex flex-col">
-          <div className="flex justify-between items-center p-3 border-b border-gray-700">
-            <h3 className="text-sm font-medium">MIPS Assistant</h3>
-            <Button variant="ghost" size="sm" onClick={() => setIsOpen(false)}>×</Button>
+        <div className="absolute top-12 right-0 w-96 h-[500px] bg-gray-900 rounded-lg shadow-xl border border-gray-800 flex flex-col overflow-hidden">
+          <div className="flex items-center gap-2 p-4 border-b border-gray-800 bg-gray-800">
+            <Bot className="w-6 h-6 text-blue-500" />
+            <div className="flex flex-col">
+              <h3 className="text-sm font-medium text-white">MIPS Bot</h3>
+              <span className="text-xs text-green-500">Online</span>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="ml-auto text-gray-400 hover:text-white"
+              onClick={() => setIsOpen(false)}
+            >
+              ×
+            </Button>
           </div>
           
           <div className="flex-1 overflow-auto p-4 space-y-4">
             {messages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === 'ai' ? 'justify-start' : 'justify-end'}`}>
-                <div className={`rounded-lg p-2 max-w-[80%] ${
-                  msg.role === 'ai' ? 'bg-gray-700' : 'bg-green-600'
+                <div className={`rounded-lg p-3 max-w-[80%] ${
+                  msg.role === 'ai' 
+                    ? 'bg-gray-800 text-white' 
+                    : 'bg-blue-600 text-white'
                 }`}>
                   {msg.content}
                 </div>
@@ -89,36 +98,36 @@ const AIChatWindow = () => {
             ))}
             {isLoading && (
               <div className="flex justify-start">
-                <div className="bg-gray-700 rounded-lg p-2">
+                <div className="bg-gray-800 rounded-lg p-3">
                   <div className="flex space-x-2">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
                   </div>
                 </div>
               </div>
             )}
           </div>
 
-          <div className="p-3 border-t border-gray-700">
-            <div className="flex gap-2">
+          <div className="p-4 border-t border-gray-800 bg-gray-800">
+            <div className="flex gap-2 items-center">
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
-                className="flex-1 bg-gray-700 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-green-500 resize-none"
-                placeholder="Ask a question..."
-                rows={2}
+                className="flex-1 bg-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                placeholder="Ask anything about MIPS..."
+                rows={1}
               />
               <Button 
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-blue-600 hover:bg-blue-700 rounded-full p-2 h-auto"
                 onClick={handleSendMessage}
                 disabled={isLoading}
               >
                 {isLoading ? (
-                  <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 ) : (
-                  'Send'
+                  <Send className="w-4 h-4" />
                 )}
               </Button>
             </div>

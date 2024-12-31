@@ -38,9 +38,12 @@ def get_register_name(num):
 
 # Modified to accept string content instead of file
 def read_asm_content(content):
+    # Normalize line endings
+    content = content.replace('\r\n', '\n')
     lines = content.split('\n')
     instructions = []
     for line in lines:
+        # Remove comments and whitespace
         line = re.sub(r'#.*', '', line).strip()
         if line:
             instructions.append(line)
@@ -68,19 +71,31 @@ def parse_labels_and_instructions(instructions):
                 label, line_part = line.split(':', 1)
                 labels[label.strip()] = current_address
                 line = line_part.strip()
-            if line.startswith('.word'):
+            if line.startswith('.asciiz'):
+                # Extract the string content between quotes
+                match = re.search(r'\.asciiz\s*"([^"]*)"', line)
+                if match:
+                    string_data = match.group(1)
+                    # Process the string character by character
+                    i = 0
+                    while i < len(string_data):
+                        if string_data[i:i+2] == '\\n':
+                            # Store actual newline character
+                            memory[current_address] = ord('\n')
+                            i += 2
+                        else:
+                            memory[current_address] = ord(string_data[i])
+                            i += 1
+                        current_address += 1
+                    # Null terminate the string
+                    memory[current_address] = 0
+                    current_address += 1
+            elif line.startswith('.word'):
                 line = line.replace('.word', '').strip()
                 values = line.split(',')
                 for value in values:
                     memory[current_address] = int(value)
                     current_address += 4
-            elif line.startswith('.asciiz'):
-                line = line.replace('.asciiz', '').strip().strip('"')
-                for char in line:
-                    memory[current_address] = ord(char)
-                    current_address += 1
-                memory[current_address] = 0  # Null-terminate the string
-                current_address += 1
         else:
             if ':' in line:
                 label, line_part = line.split(':', 1)
@@ -89,6 +104,7 @@ def parse_labels_and_instructions(instructions):
             if line:
                 parsed_instructions.append(line)
                 pc += 4
+
     return parsed_instructions, labels, memory
 
 def convert_to_binary(instruction, labels, current_pc):
@@ -136,7 +152,25 @@ def convert_to_binary(instruction, labels, current_pc):
     op = parts[0]
 
     try:
-        if op == "li":
+        if op == "la":  # Handle load address instruction
+            rt_num = get_register_number(parts[1])
+            label = parts[2].strip()  # Remove any whitespace
+            if label not in labels:
+                raise ValueError(f"Label {label} not found")
+                
+            label_address = labels[label]
+            # Split into lui and ori instructions
+            upper = (label_address >> 16) & 0xFFFF
+            lower = label_address & 0xFFFF
+            
+            # Create lui instruction for upper bits
+            lui_inst = f"{opcodes['lui']}00000{format(rt_num, '05b')}{format(upper, '016b')}"
+            # Create ori instruction for lower bits
+            ori_inst = f"{opcodes['ori']}{format(rt_num, '05b')}{format(rt_num, '05b')}{format(lower, '016b')}"
+            
+            return [lui_inst, ori_inst]
+            
+        elif op == "li":
             rd_num = get_register_number(parts[1])
             imm_value = int(parts[2])
             if -32768 <= imm_value <= 65535:
@@ -156,16 +190,6 @@ def convert_to_binary(instruction, labels, current_pc):
                 # Second instruction: ori rd, rd, lower 16 bits
                 ori_inst = f"{opcodes['ori']}{rd}{rd}{format(lower, '016b')}"
                 return [lui_inst, ori_inst]
-        elif op == "la":
-            rd_num = get_register_number(parts[1])
-            label_address = labels.get(parts[2], 0)
-            upper = (label_address >> 16) & 0xFFFF
-            lower = label_address & 0xFFFF
-            rd = format(rd_num, '05b')
-            rs = format(0, '05b')
-            lui_inst = f"{opcodes['lui']}{rs}{rd}{format(upper, '016b')}"
-            ori_inst = f"{opcodes['ori']}{rd}{rd}{format(lower, '016b')}"
-            return [lui_inst, ori_inst]
         elif op == "syscall":
             return f"{opcodes[op]}00000000000000000000{functs[op]}"
         elif op in ["addi", "andi", "ori"]:
@@ -270,9 +294,16 @@ def generate_control_signals(op_code):
         'MemtoReg': 0,
         'Branch': 0,
         'Jump': 0,
-        'Syscall': 0  # Added syscall control signal
+        'Syscall': 0,
+        'LoadAddress': 0  # New control signal for la
     }
-    if op_code in ['add', 'sub', 'and', 'or', 'slt', 'mul', 'xor', 'nor', 'sll', 'srl']:
+    
+    if op_code == 'la':
+        signals['RegWrite'] = 1
+        signals['LoadAddress'] = 1  # Special signal for la
+    elif op_code == 'syscall':
+        signals['Syscall'] = 1
+    elif op_code in ['add', 'sub', 'and', 'or', 'slt', 'mul', 'xor', 'nor', 'sll', 'srl']:
         signals['RegDst'] = 1
         signals['RegWrite'] = 1
         signals['ALUOp'] = '10'
@@ -303,8 +334,6 @@ def generate_control_signals(op_code):
         signals['RegWrite'] = 1
     elif op_code == 'jr':
         signals['Jump'] = 1
-    elif op_code == 'syscall':
-        signals['Syscall'] = 1  # Indicate syscall operation
     else:
         # Unknown operation
         raise ValueError(f"Unsupported operation {op_code}")
@@ -335,25 +364,22 @@ def display_memory(memory):
         print(f"Address {addr:08x}: {display_value}")
     print()
 
-def syscall(reg, memory):
+def syscall(reg, memory, output_capture):
     syscall_num = reg['v0']
-    if syscall_num == 1:
-        # Print integer in $a0
-        print(f"Output (int): {reg['a0']}")
-    elif syscall_num == 4:
-        # Print string at address in $a0
-        print("Output (string):", end="")
+    if syscall_num == 1:  # print integer
+        output_capture.write(str(reg['a0']))
+    elif syscall_num == 4:  # print string
         string_address = reg['a0']
+        # Read and output the string directly from memory
         while memory.get(string_address, 0) != 0:
-            print(chr(memory[string_address]), end="")
-            string_address +=1
-        print()
-    elif syscall_num ==10:
-        # Exit program
-        print("Exiting program.")
+            char_code = int(memory[string_address])
+            output_capture.write(chr(char_code))
+            string_address += 1
+    elif syscall_num == 10:  # exit
+        output_capture.write("Program exit\n")
         return False
     else:
-        print(f"Unknown syscall: {syscall_num}")
+        output_capture.write(f"Unknown syscall: {syscall_num}\n")
     return True
 
 
@@ -560,17 +586,17 @@ class OutputCapture:
 
 def syscall(reg, memory, output_capture):
     syscall_num = reg['v0']
-    if syscall_num == 1:
-        output_capture.write(f"Output (int): {reg['a0']}\n")
-    elif syscall_num == 4:
-        output_capture.write("Output (string): ")
+    if syscall_num == 1:  # print integer
+        output_capture.write(str(reg['a0']))
+    elif syscall_num == 4:  # print string
         string_address = reg['a0']
+        # Read and output the string directly from memory
         while memory.get(string_address, 0) != 0:
-            output_capture.write(chr(memory[string_address]))
+            char_code = int(memory[string_address])
+            output_capture.write(chr(char_code))
             string_address += 1
-        output_capture.write("\n")
-    elif syscall_num == 10:
-        output_capture.write("Exiting program.\n")
+    elif syscall_num == 10:  # exit
+        output_capture.write("Program exit\n")
         return False
     else:
         output_capture.write(f"Unknown syscall: {syscall_num}\n")
@@ -584,41 +610,30 @@ def run_simulation(parsed_instructions, labels, memory):
     reg['sp'] = 0x7FFFFFFC
     pc = 0
 
-    # Prepare instructions list (same as original)
     instructions_list = []
     pc_counter = 0
     for inst in parsed_instructions:
-        bin_inst = convert_to_binary(inst, labels, pc_counter)
-        if bin_inst:
-            if isinstance(bin_inst, list):
-                for bi in bin_inst:
-                    instructions_list.append((inst, bi, pc_counter))
-                    pc_counter += 4
-            else:
-                instructions_list.append((inst, bin_inst, pc_counter))
-                pc_counter += 4
-        else:
-            instructions_list.append((inst, None, pc_counter))
-            pc_counter += 4
+        instructions_list.append((inst, None, pc_counter))
+        pc_counter += 4
 
     inD = {pc: (inst, mc) for inst, mc, pc in instructions_list}
 
-    # Main execution loop
     while pc in inD:
-        current_instruction, mc = inD[pc]
+        current_instruction, _ = inD[pc]
         parts = re.split(r'[,\s()]+', current_instruction)
         parts = [p for p in parts if p]
-
         op_code = parts[0]
+
         try:
             control_signals = generate_control_signals(op_code)
-        except ValueError as e:
-            output_capture.write(f"Error: {e}\n")
-            break
 
-        try:
-            # Execute instruction (same logic as original)
-            if op_code == 'syscall':
+            if control_signals['LoadAddress']:  # Handle la instruction
+                rt_name = get_register_name(get_register_number(parts[1]))
+                label = parts[2].strip()
+                if label not in labels:
+                    raise ValueError(f"Label {label} not found")
+                reg[rt_name] = labels[label]
+            elif control_signals['Syscall']:
                 if not syscall(reg, memory, output_capture):
                     break
             elif control_signals['Jump']:
@@ -739,52 +754,52 @@ def run_simulation(parsed_instructions, labels, memory):
             output_capture.write(f"Error executing instruction: {current_instruction} -> {e}\n")
             break
 
-        pc += 4  # Increment PC after executing the instruction
+        pc += 4
 
-    # Convert memory values to strings for JSON serialization
     memory_output = {hex(addr): str(value) for addr, value in memory.items()}
     
     return {
         'registers': reg,
         'memory': memory_output,
         'console_output': output_capture.get_output(),
-        'pc': pc  # Return the final PC value
+        'pc': pc
     }
 
 @app.route('/api/simulate', methods=['POST'])
 def simulate_mips():
     try:
-        print("=== Received simulation request ===")
         if not request.is_json:
-            print("Error: Request is not JSON")
-            return jsonify({'error': 'Request must be JSON'}), 400
+            return jsonify({'success': False, 'error': 'Request must be JSON'}), 400
 
         data = request.get_json()
-        print("Received data:", data)
-        
         if 'code' not in data:
-            print("Error: No code provided")
-            return jsonify({'error': 'No code provided'}), 400
+            return jsonify({'success': False, 'error': 'No code provided'}), 400
 
         # Parse the assembly code
         content = data['code']
         instructions = read_asm_content(content)
-        parsed_instructions, labels, memory = parse_labels_and_instructions(instructions)
         
-        # Run simulation
-        results = run_simulation(parsed_instructions, labels, memory)
-        print("Simulation results:", results)
-        
-        return jsonify({
-            'success': True,
-            'data': results
-        }), 200
+        try:
+            parsed_instructions, labels, memory = parse_labels_and_instructions(instructions)
+            results = run_simulation(parsed_instructions, labels, memory)
+            
+            return jsonify({
+                'success': True,
+                'data': results
+            }), 200
+            
+        except ValueError as e:
+            # Handle specific validation errors
+            return jsonify({
+                'success': False,
+                'error': str(e)
+            }), 500
 
     except Exception as e:
-        print(f"Error during simulation: {str(e)}")
+        # Handle unexpected errors
         return jsonify({
             'success': False,
-            'error': str(e)
+            'error': f"Internal server error: {str(e)}"
         }), 500
 
 @app.route('/api/health', methods=['GET'])

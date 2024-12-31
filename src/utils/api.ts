@@ -6,6 +6,7 @@ export interface SimulationResponse {
     registers: { [key: string]: number };
     memory: { [address: string]: string };
     console_output: string;
+    pc: number;
   };
   error?: string;
 }
@@ -13,18 +14,22 @@ export interface SimulationResponse {
 const API_BASE_URL ='https://anujpatil.pythonanywhere.com'  // Replace with your actual production URL
     
 
-export async function simulateCode(code: string): Promise<SimulationResponse> {
+  export async function simulateCode(code: string): Promise<SimulationResponse> {
   try {
     console.log('=== Sending simulation request ===');
-    console.log('Code:', code);
-    console.log('API URL:', API_URL);
+    
+    // Normalize line endings and remove extra whitespace
+    const normalizedCode = code.replace(/\r\n/g, '\n').trim();
+    console.log('Normalized Code:', normalizedCode);
 
     const response = await fetch(`${API_BASE_URL}/api/simulate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ code }),
+      body: JSON.stringify({ 
+        code: normalizedCode 
+      }),
     });
 
     console.log('Response status:', response.status);

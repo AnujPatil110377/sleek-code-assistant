@@ -621,7 +621,6 @@ def run_simulation(parsed_instructions, labels, memory):
             if op_code == 'syscall':
                 if not syscall(reg, memory, output_capture):
                     break
-            # ... (rest of the execution logic remains the same)
             elif control_signals['Jump']:
                 if op_code == 'j' or op_code == 'jal':
                     label = parts[1]

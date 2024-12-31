@@ -11,6 +11,8 @@ export const registerMap: { [key: string]: number } = {
   'gp': 28, 'sp': 29, 'fp': 30, 'ra': 31
 };
 
+export type { SimulatorState };  // Export the type
+
 export const createInitialState = (): SimulatorState => ({
   registers: Object.keys(registerMap).reduce((acc, key) => {
     acc[key] = 0;

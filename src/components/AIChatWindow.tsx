@@ -4,9 +4,14 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/use-toast'
 
+type Message = {
+  role: 'user' | 'ai';
+  content: string;
+}
+
 const AIChatWindow = () => {
   const [isOpen, setIsOpen] = useState(false)
-  const [messages, setMessages] = useState<Array<{ role: 'user' | 'ai'; content: string }>>([])
+  const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
@@ -18,18 +23,18 @@ const AIChatWindow = () => {
       setIsLoading(true)
       console.log('Sending message:', input)
       
-      // Add user message to chat
-      const newMessages = [
+      // Add user message to chat with proper typing
+      const newMessages: Message[] = [
         ...messages,
-        { role: 'user', content: input }
+        { role: 'user' as const, content: input }
       ]
       setMessages(newMessages)
       setInput('')
 
       // Simulate AI response with a delay
       setTimeout(() => {
-        const aiResponse = {
-          role: 'ai' as const,
+        const aiResponse: Message = {
+          role: 'ai',
           content: "I'm here to help you with the MIPS simulator! You can ask me questions about MIPS assembly, how to use the simulator, or get help debugging your code."
         }
         setMessages(prev => [...prev, aiResponse])

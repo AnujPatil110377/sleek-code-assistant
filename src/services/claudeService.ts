@@ -2,7 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { SimulatorState } from '@/utils/mipsSimulator';
 
 const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
+  apiKey: import.meta.env.VITE_ANTHROPIC_API_KEY,
 });
 
 export async function generateClaudeResponse(
@@ -35,7 +35,15 @@ export async function generateClaudeResponse(
     });
 
     console.log('Claude response received:', response.content);
-    return response.content[0].text;
+    
+    // Handle different content block types
+    const content = response.content[0];
+    if ('text' in content) {
+      return content.text;
+    } else {
+      // Handle other content types or return a default message
+      return "I apologize, but I can only process text responses at the moment.";
+    }
   } catch (error) {
     console.error('Error generating Claude response:', error);
     throw new Error('Failed to generate response from Claude');

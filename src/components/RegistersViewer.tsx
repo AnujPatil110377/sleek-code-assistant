@@ -3,10 +3,11 @@ import { Input } from '@/components/ui/input';
 
 interface RegistersViewerProps {
   registers: { [key: string]: number };
+  previousRegisters: { [key: string]: number };
   onRegisterChange?: (name: string, value: number) => void;
 }
 
-const RegistersViewer = ({ registers, onRegisterChange }: RegistersViewerProps) => {
+const RegistersViewer = ({ registers, previousRegisters, onRegisterChange }: RegistersViewerProps) => {
   const [editingRegister, setEditingRegister] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
 
@@ -23,6 +24,11 @@ const RegistersViewer = ({ registers, onRegisterChange }: RegistersViewerProps) 
       }
     }
     setEditingRegister(null);
+  };
+
+  const hasChanged = (name: string) => {
+    return previousRegisters[name] !== undefined && 
+           previousRegisters[name] !== registers[name];
   };
 
   const registersList = Object.entries(registers);
@@ -44,7 +50,12 @@ const RegistersViewer = ({ registers, onRegisterChange }: RegistersViewerProps) 
           </thead>
           <tbody>
             {leftRegisters.map(([name, value]) => (
-              <tr key={name} className="border-b border-gray-800">
+              <tr 
+                key={name} 
+                className={`border-b border-gray-800 transition-colors duration-500 ${
+                  hasChanged(name) ? 'bg-blue-900 bg-opacity-30 animate-pulse' : ''
+                }`}
+              >
                 <td className="p-1 font-mono">${name}</td>
                 <td className="p-1 font-mono">
                   {editingRegister === name ? (
@@ -85,7 +96,12 @@ const RegistersViewer = ({ registers, onRegisterChange }: RegistersViewerProps) 
           </thead>
           <tbody>
             {rightRegisters.map(([name, value]) => (
-              <tr key={name} className="border-b border-gray-800">
+              <tr 
+                key={name} 
+                className={`border-b border-gray-800 transition-colors duration-500 ${
+                  hasChanged(name) ? 'bg-blue-900 bg-opacity-30 animate-pulse' : ''
+                }`}
+              >
                 <td className="p-1 font-mono">${name}</td>
                 <td className="p-1 font-mono">
                   {editingRegister === name ? (

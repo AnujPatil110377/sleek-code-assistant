@@ -8,12 +8,15 @@ export interface SimulationResponse {
   error?: string;
 }
 
+const API_BASE_URL ='https://anujpatil.pythonanywhere.com'  // Replace with your actual production URL
+    
+
 export async function simulateCode(code: string): Promise<SimulationResponse> {
   try {
     console.log('=== Sending simulation request ===');
     console.log('Code:', code);
 
-    const response = await fetch('http://localhost:5000/api/simulate', {
+    const response = await fetch(`${API_BASE_URL}/api/simulate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -22,16 +25,19 @@ export async function simulateCode(code: string): Promise<SimulationResponse> {
     });
 
     console.log('Response status:', response.status);
-    
+
+    // Check if the response is OK
     if (!response.ok) {
       console.error('Response not OK:', response.statusText);
+      const errorText = await response.text();
       return {
         success: false,
-        error: `Error: ${response.statusText}`
+        error: `Error: ${response.status} - ${errorText || response.statusText}`,
       };
     }
 
-    const data = await response.json();
+    // Parse the response JSON
+    const data: SimulationResponse = await response.json();
     console.log('Response data:', data);
 
     return data;
@@ -39,7 +45,7 @@ export async function simulateCode(code: string): Promise<SimulationResponse> {
     console.error('API call failed:', error);
     return {
       success: false,
-      error: 'Failed to connect to simulation server'
+      error: 'Failed to connect to the simulation server. Please try again later.',
     };
   }
 } 

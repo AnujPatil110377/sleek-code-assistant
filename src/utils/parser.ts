@@ -7,7 +7,8 @@ export function readAsmFile(content: string): string[] {
   for (const line of lines) {
     // Remove comments and trim whitespace
     const cleanLine = line.replace(/#.*/, '').trim();
-    if (cleanLine) {
+    // Skip empty lines and .globl directives
+    if (cleanLine && !cleanLine.startsWith('.globl')) {
       instructions.push(cleanLine);
     }
   }
@@ -27,11 +28,6 @@ export function parseLabelsAndInstructions(
 
   // First pass: collect all labels
   for (const line of instructions) {
-    // Skip .globl directives
-    if (line.trim().startsWith('.globl')) {
-      continue;
-    }
-
     if (line.startsWith('.data')) {
       dataMode = true;
       continue;
@@ -62,11 +58,6 @@ export function parseLabelsAndInstructions(
 
   // Second pass: process instructions and data
   for (const line of instructions) {
-    // Skip .globl directives
-    if (line.trim().startsWith('.globl')) {
-      continue;
-    }
-
     if (line.startsWith('.data')) {
       dataMode = true;
       continue;

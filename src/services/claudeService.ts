@@ -1,8 +1,8 @@
-import { Groq } from '@groq-cloud/sdk';
+import { Groq } from 'groq';
 import { SimulatorState } from '@/utils/mipsSimulator';
 
 const groq = new Groq({
-  apiKey: process.env.VITE_GROQ_API_KEY || '',
+  apiKey: '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',
   dangerouslyAllowBrowser: true,
 });
 
@@ -24,27 +24,25 @@ export async function generateGroqResponse(
       Memory: ${JSON.stringify(simulatorState.memory)}`;
     }
 
-    const response = await groq.messages.create({
-      model: 'groq-model',
-      max_tokens: 1000,
+    const response = await groq.chat.completions.create({
+      model: 'mixtral-8x7b-32768',
+      messages: [
+        {
+          role: 'system',
+          content: systemPrompt
+        },
+        {
+          role: 'user',
+          content: message
+        }
+      ],
       temperature: 0.7,
-      system: systemPrompt,
-      messages: [{
-        role: 'user',
-        content: message,
-      }],
+      max_tokens: 1000,
     });
 
-    console.log('Groq response received:', response.content);
+    console.log('Groq response received:', response.choices[0]?.message?.content);
     
-    // Handle different content block types
-    const content = response.content[0];
-    if ('text' in content) {
-      return content.text;
-    } else {
-      // Handle other content types or return a default message
-      return "I apologize, but I can only process text responses at the moment.";
-    }
+    return response.choices[0]?.message?.content || "I apologize, but I couldn't generate a response.";
   } catch (error) {
     console.error('Error generating Groq response:', error);
     throw new Error('Failed to generate response from Groq');

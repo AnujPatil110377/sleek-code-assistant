@@ -1,4 +1,4 @@
-import { Groq } from 'groq';
+import Groq from 'groq';
 import { SimulatorState } from '@/utils/mipsSimulator';
 
 const groq = new Groq({

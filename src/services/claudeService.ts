@@ -1,40 +1,13 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { supabase } from '@/integrations/supabase/client';
 
-async function getAnthropicKey() {
-  try {
-    console.log('Fetching Anthropic API key from Supabase...');
-    const { data, error } = await supabase
-      .from('secrets')
-      .select('value')
-      .eq('name', 'ANTHROPIC_API_KEY')
-      .maybeSingle();
-
-    if (error) {
-      console.error('Error fetching API key:', error);
-      throw error;
-    }
-    
-    if (!data) {
-      console.error('API key not found in secrets');
-      throw new Error('API key not found in Supabase secrets. Please add it using the form above.');
-    }
-
-    console.log('Successfully retrieved API key');
-    return data.value;
-  } catch (error) {
-    console.error('Error in getAnthropicKey:', error);
-    throw new Error('Could not retrieve API key. Please ensure it is properly set in Supabase secrets.');
-  }
-}
+const CLAUDE_API_KEY = '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';
 
 export async function generateClaudeResponse(message: string) {
   try {
-    const apiKey = await getAnthropicKey();
     console.log('Initializing Anthropic client...');
 
     const anthropic = new Anthropic({
-      apiKey,
+      apiKey: CLAUDE_API_KEY,
       dangerouslyAllowBrowser: true
     });
 

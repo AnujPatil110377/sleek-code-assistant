@@ -28,13 +28,38 @@ const AIChatWindow = () => {
       setMessages(prev => [...prev, newMessage])
       setInput('')
 
-      const response = await generateGroqResponse(input)
+      const allMessages = [...messages, newMessage]
+      console.log('Messages being sent:', allMessages)
+
+      const validMessages = allMessages.map(msg => ({
+        role: msg.role as 'user' | 'ai',
+        content: msg.content
+      })).filter(msg => 
+        msg.role === 'user' || msg.role === 'ai'
+      )
+
+      console.log('Valid messages:', validMessages)
+
+      console.log('Final payload being sent to API:', {
+        model: 'llama-3.1-70b-versatile',
+        messages: [
+          {
+            role: 'system',
+            content: `You are an AI assistant specialized in MIPS assembly programming. 
+            When explaining code, keep responses concise and focused on MIPS assembly.`
+          },
+          ...validMessages,
+        ],
+        temperature: 0.7,
+        max_tokens: 1000,
+      });
+
+      const response = await generateGroqResponse(validMessages)
 
       const aiResponse: Message = {
         role: 'ai',
         content: response
       }
-      console.log(aiResponse.content)
       setMessages(prev => [...prev, aiResponse])
 
     } catch (error) {

@@ -39,7 +39,9 @@ export async function generateGroqResponse(
           {
             role: 'system',
             content: `You are an AI assistant specialized in MIPS assembly programming. 
+     
             When explaining code:
+            You should first act as a simle ai chat bot and then act as a MIPS assembly expert when person ask you to write code.
             1. Use clear section headers with double line breaks before and after
             2. Format code blocks with proper indentation and comments
             3. Use bullet points with extra spacing between items

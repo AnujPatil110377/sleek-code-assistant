@@ -11,7 +11,8 @@ async function getAnthropicKey() {
       .single();
 
     if (error) throw error;
-    return data?.value;
+    if (!data?.value) throw new Error('API key not found');
+    return data.value;
   } catch (error) {
     console.error('Error fetching Anthropic API key:', error);
     throw new Error('Could not retrieve API key');

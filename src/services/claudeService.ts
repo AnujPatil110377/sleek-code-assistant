@@ -1,9 +1,8 @@
-import Groq from 'groq';
+import { Groq } from 'groq-sdk';
 import { SimulatorState } from '@/utils/mipsSimulator';
 
 const groq = new Groq({
-  apiKey: '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',
-  dangerouslyAllowBrowser: true,
+  apiKey: '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'
 });
 
 export async function generateGroqResponse(

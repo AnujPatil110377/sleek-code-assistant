@@ -4,17 +4,27 @@ import { SimulatorState } from '@/utils/mipsSimulator';
 
 async function getAnthropicKey() {
   try {
+    console.log('Fetching Anthropic API key from Supabase...');
     const { data, error } = await supabase
       .from('secrets')
       .select('value')
       .eq('name', 'ANTHROPIC_API_KEY')
       .single();
 
-    if (error) throw error;
-    if (!data?.value) throw new Error('API key not found');
+    if (error) {
+      console.error('Error fetching API key:', error);
+      throw error;
+    }
+    
+    if (!data?.value) {
+      console.error('API key not found in secrets');
+      throw new Error('API key not found');
+    }
+
+    console.log('Successfully retrieved API key');
     return data.value;
   } catch (error) {
-    console.error('Error fetching Anthropic API key:', error);
+    console.error('Error in getAnthropicKey:', error);
     throw new Error('Could not retrieve API key');
   }
 }
@@ -27,9 +37,7 @@ export async function generateClaudeResponse(
     console.log('Generating Claude response for:', message);
     
     const apiKey = await getAnthropicKey();
-    if (!apiKey) {
-      throw new Error('API key not found. Please set up your Anthropic API key in Supabase secrets.');
-    }
+    console.log('API key retrieved, initializing Anthropic client');
 
     const anthropic = new Anthropic({
       apiKey,
@@ -47,6 +55,7 @@ export async function generateClaudeResponse(
       Memory: ${JSON.stringify(simulatorState.memory)}`;
     }
 
+    console.log('Sending request to Claude API...');
     const response = await anthropic.messages.create({
       model: 'claude-3-sonnet-20240229',
       max_tokens: 1000,

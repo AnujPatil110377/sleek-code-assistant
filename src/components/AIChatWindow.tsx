@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { useToast } from '@/components/ui/use-toast'
+import { useToast } from '@/hooks/use-toast'
 import { Bot, Send } from 'lucide-react'
 import { generateClaudeResponse } from '@/services/claudeService'
 
@@ -39,9 +39,10 @@ const AIChatWindow = () => {
 
     } catch (error) {
       console.error('Error sending message:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to get response from Claude'
       toast({
         title: "Error",
-        description: "Failed to get response from Claude. Please try again.",
+        description: errorMessage,
         variant: "destructive"
       })
     } finally {

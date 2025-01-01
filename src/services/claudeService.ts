@@ -1,10 +1,22 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { supabase } from '@/integrations/supabase/client';
 import { SimulatorState } from '@/utils/mipsSimulator';
 
-const anthropic = new Anthropic({
-  apiKey: import.meta.env.VITE_ANTHROPIC_API_KEY,
-  dangerouslyAllowBrowser: true, // Add this line to allow browser usage
-});
+async function getAnthropicKey() {
+  try {
+    const { data, error } = await supabase
+      .from('secrets')
+      .select('value')
+      .eq('name', 'ANTHROPIC_API_KEY')
+      .single();
+
+    if (error) throw error;
+    return data?.value;
+  } catch (error) {
+    console.error('Error fetching Anthropic API key:', error);
+    throw new Error('Could not retrieve API key');
+  }
+}
 
 export async function generateClaudeResponse(
   message: string, 
@@ -13,6 +25,16 @@ export async function generateClaudeResponse(
   try {
     console.log('Generating Claude response for:', message);
     
+    const apiKey = await getAnthropicKey();
+    if (!apiKey) {
+      throw new Error('API key not found. Please set up your Anthropic API key in Supabase secrets.');
+    }
+
+    const anthropic = new Anthropic({
+      apiKey,
+      dangerouslyAllowBrowser: true
+    });
+
     let systemPrompt = `You are Claude, an AI assistant specialized in MIPS assembly programming. 
     You help users understand and debug MIPS code, explaining concepts clearly and providing specific examples.
     Keep responses concise and focused on MIPS assembly.`;
@@ -42,11 +64,11 @@ export async function generateClaudeResponse(
     if ('text' in content) {
       return content.text;
     } else {
-      // Handle other content types or return a default message
       return "I apologize, but I can only process text responses at the moment.";
     }
   } catch (error) {
     console.error('Error generating Claude response:', error);
-    throw new Error('Failed to generate response from Claude');
+    const errorMessage = error instanceof Error ? error.message : 'Failed to generate response from Claude';
+    throw new Error(errorMessage);
   }
 }

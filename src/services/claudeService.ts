@@ -1,41 +1,52 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { Groq } from '@groq-cloud/sdk';
+import { SimulatorState } from '@/utils/mipsSimulator';
 
-const CLAUDE_API_KEY = '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';
+const groq = new Groq({
+  apiKey: process.env.VITE_GROQ_API_KEY || '',
+  dangerouslyAllowBrowser: true,
+});
 
-export async function generateClaudeResponse(message: string) {
+export async function generateGroqResponse(
+  message: string, 
+  simulatorState?: SimulatorState
+) {
   try {
-    console.log('Initializing Anthropic client...');
+    console.log('Generating Groq response for:', message);
+    
+    let systemPrompt = `You are Groq, an AI assistant specialized in MIPS assembly programming. 
+    You help users understand and debug MIPS code, explaining concepts clearly and providing specific examples.
+    Keep responses concise and focused on MIPS assembly.`;
 
-    const anthropic = new Anthropic({
-      apiKey: CLAUDE_API_KEY,
-      dangerouslyAllowBrowser: true
-    });
+    if (simulatorState) {
+      systemPrompt += `\nCurrent simulator state:
+      PC: ${simulatorState.pc}
+      Registers: ${JSON.stringify(simulatorState.registers)}
+      Memory: ${JSON.stringify(simulatorState.memory)}`;
+    }
 
-    console.log('Sending message to Claude...');
-    const response = await anthropic.messages.create({
-      model: 'claude-3-sonnet-20240229',
+    const response = await groq.messages.create({
+      model: 'groq-model',
       max_tokens: 1000,
       temperature: 0.7,
-      system: "You are a helpful MIPS assembly programming assistant. You help users understand and debug MIPS code, explaining concepts clearly and providing specific examples.",
+      system: systemPrompt,
       messages: [{
         role: 'user',
         content: message,
       }],
     });
 
-    console.log('Claude response received');
+    console.log('Groq response received:', response.content);
     
     // Handle different content block types
     const content = response.content[0];
     if ('text' in content) {
       return content.text;
     } else {
+      // Handle other content types or return a default message
       return "I apologize, but I can only process text responses at the moment.";
     }
-
   } catch (error) {
-    console.error('Error generating Claude response:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to generate response from Claude';
-    throw new Error(errorMessage);
+    console.error('Error generating Groq response:', error);
+    throw new Error('Failed to generate response from Groq');
   }
 }

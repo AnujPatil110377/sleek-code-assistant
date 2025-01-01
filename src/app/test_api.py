@@ -226,5 +226,67 @@ class TestMIPSSimulator(unittest.TestCase):
         
         self.assertEqual(output.strip(), "Test")
 
+    def test_move_instruction(self):
+        # Test case: Move instruction
+        test_code = '''
+.text
+    li $t0, 42        # Load 42 into $t0
+    move $t1, $t0     # Copy value from $t0 to $t1
+    move $t2, $t1     # Copy value from $t1 to $t2
+        '''
+        
+        response = self.app.post('/api/simulate',
+                               data=json.dumps({'code': test_code}),
+                               content_type='application/json')
+        
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        
+        self.assertTrue(data['success'])
+        # Verify that the value was correctly copied through the registers
+        self.assertEqual(data['data']['registers']['t0'], 42)
+        self.assertEqual(data['data']['registers']['t1'], 42)
+        self.assertEqual(data['data']['registers']['t2'], 42)
+
+    def test_move_step_execution(self):
+        # Test case: Move instruction with step execution
+        test_code = '''
+.text
+    li $t0, 42        # Load 42 into $t0
+    move $t1, $t0     # Copy value from $t0 to $t1
+        '''
+        
+        # Initialize step execution
+        init_response = self.app.post('/api/init-step',
+                                    data=json.dumps({'code': test_code}),
+                                    content_type='application/json')
+        
+        self.assertEqual(init_response.status_code, 200)
+        init_data = json.loads(init_response.data)
+        session_id = init_data['session_id']
+        
+        # First step: li $t0, 42
+        step1_response = self.app.post('/api/step',
+                                     data=json.dumps({'session_id': session_id}),
+                                     content_type='application/json')
+        
+        self.assertEqual(step1_response.status_code, 200)
+        step1_data = json.loads(step1_response.data)
+        
+        self.assertTrue(step1_data['success'])
+        self.assertEqual(step1_data['data']['registers']['t0'], 42)
+        
+        # Second step: move $t1, $t0
+        step2_response = self.app.post('/api/step',
+                                     data=json.dumps({'session_id': session_id}),
+                                     content_type='application/json')
+        
+        self.assertEqual(step2_response.status_code, 200)
+        step2_data = json.loads(step2_response.data)
+        
+        self.assertTrue(step2_data['success'])
+        self.assertEqual(step2_data['data']['registers']['t0'], 42)
+        self.assertEqual(step2_data['data']['registers']['t1'], 42)
+
 if __name__ == '__main__':
     unittest.main() 

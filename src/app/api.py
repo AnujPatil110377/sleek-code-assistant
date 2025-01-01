@@ -192,8 +192,8 @@ def convert_to_binary(instruction, labels, current_pc):
                 rs = format(0, '05b')
                 lui_inst = f"{opcodes['lui']}{rs}{rd}{format(upper, '016b')}"
                 # Second instruction: ori rd, rd, lower 16 bits
-                ori_inst = f"{opcodes['ori']}{rd}{rd}{format(lower, '016b')}"
-                return [lui_inst, ori_inst]
+            ori_inst = f"{opcodes['ori']}{rd}{rd}{format(lower, '016b')}"
+            return [lui_inst, ori_inst]
         elif op == "syscall":
             return f"{opcodes[op]}00000000000000000000{functs[op]}"
         elif op in ["addi", "andi", "ori"]:
@@ -289,20 +289,24 @@ def convert_to_binary(instruction, labels, current_pc):
 
 def generate_control_signals(op_code):
     signals = {
-        'RegDst': 0,
-        'RegWrite': 0,
-        'ALUSrc': 0,
+        'RegWrite': False,
+        'RegDst': False,
+        'ALUSrc': False,
+        'Branch': False,
+        'MemRead': False,
+        'MemWrite': False,
+        'MemToReg': False,
         'ALUOp': '00',
-        'MemRead': 0,
-        'MemWrite': 0,
-        'MemtoReg': 0,
-        'Branch': 0,
-        'Jump': 0,
-        'Syscall': 0,
-        'LoadAddress': 0  # New control signal for la
+        'Jump': False,
+        'LoadAddress': False,
+        'Syscall': False,
+        'Move': False  # New control signal for move instruction
     }
-    
-    if op_code == 'la':
+
+    if op_code == 'move':
+        signals['RegWrite'] = True
+        signals['Move'] = True
+    elif op_code == 'la':
         signals['RegWrite'] = 1
         signals['LoadAddress'] = 1  # Special signal for la
     elif op_code == 'syscall':
@@ -426,8 +430,8 @@ def run_simulation(parsed_instructions, labels, memory):
     instructions_list = []
     pc_counter = 0
     for inst in parsed_instructions:
-        instructions_list.append((inst, None, pc_counter))
-        pc_counter += 4
+            instructions_list.append((inst, None, pc_counter))
+            pc_counter += 4
 
     inD = {pc: (inst, mc) for inst, mc, pc in instructions_list}
 
@@ -440,7 +444,11 @@ def run_simulation(parsed_instructions, labels, memory):
         try:
             control_signals = generate_control_signals(op_code)
 
-            if control_signals['LoadAddress']:  # Handle la instruction
+            if control_signals['Move']:  # Handle move instruction
+                rd_name = get_register_name(get_register_number(parts[1]))
+                rs_name = get_register_name(get_register_number(parts[2]))
+                reg[rd_name] = reg[rs_name]
+            elif control_signals['LoadAddress']:  # Handle la instruction
                 rt_name = get_register_name(get_register_number(parts[1]))
                 label = parts[2].strip()
                 if label not in labels:
@@ -723,7 +731,7 @@ def step_instruction():
                 'success': False,
                 'error': 'Empty instruction'
             }), 400
-            
+
         op_code = parts[0]
         
         try:
@@ -735,7 +743,11 @@ def step_instruction():
                 state['registers']['sp'] = 0x7FFFFFFC
             
             # Execute instruction
-            if control_signals['LoadAddress']:  # Handle la instruction
+            if control_signals['Move']:  # Handle move instruction
+                rd_name = get_register_name(get_register_number(parts[1]))
+                rs_name = get_register_name(get_register_number(parts[2]))
+                state['registers'][rd_name] = state['registers'][rs_name]
+            elif control_signals['LoadAddress']:  # Handle la instruction
                 rt_name = get_register_name(get_register_number(parts[1]))
                 label = parts[2].strip()
                 if label not in state['labels']:
@@ -915,13 +927,13 @@ def step_instruction():
                     'current_instruction': current_instruction
                 }
             }), 200
-            
+
         except Exception as e:
             return jsonify({
                 'success': False,
                 'error': f"Error executing instruction: {str(e)}"
             }), 500
-            
+
     except Exception as e:
         return jsonify({
             'success': False,

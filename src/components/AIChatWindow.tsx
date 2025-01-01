@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
 import { Bot, Send } from 'lucide-react'
-import { generateClaudeResponse } from '@/services/claudeService'
+import { generateGroqResponse, formatResponse } from '@/services/groqService'
 
 type Message = {
   role: 'user' | 'ai';
@@ -17,29 +17,29 @@ const AIChatWindow = () => {
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
+  const chatWindowRef = useRef<HTMLDivElement>(null)
 
   const handleSendMessage = async () => {
     if (!input.trim()) return
 
     try {
       setIsLoading(true)
-      console.log('Sending message to Claude:', input)
-      
       const newMessage: Message = { role: 'user', content: input }
       setMessages(prev => [...prev, newMessage])
       setInput('')
 
-      const claudeResponse = await generateClaudeResponse(input)
-      
+      const response = await generateGroqResponse(input)
+
       const aiResponse: Message = {
         role: 'ai',
-        content: claudeResponse
+        content: response
       }
+      console.log(aiResponse.content)
       setMessages(prev => [...prev, aiResponse])
 
     } catch (error) {
       console.error('Error sending message:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Failed to get response from Claude'
+      const errorMessage = error instanceof Error ? error.message : 'Failed to get response'
       toast({
         title: "Error",
         description: errorMessage,
@@ -57,6 +57,29 @@ const AIChatWindow = () => {
     }
   }
 
+  const toggleFullScreen = () => {
+    if (chatWindowRef.current) {
+      if (!document.fullscreenElement) {
+        chatWindowRef.current.requestFullscreen().catch(err => {
+          console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+        });
+      } else {
+        document.exitFullscreen();
+      }
+    }
+  }
+
+  const renderMessage = (content: string) => {
+    return (
+      <div 
+        className="text-sm leading-relaxed"
+        dangerouslySetInnerHTML={{ 
+          __html: formatResponse(content) 
+        }} 
+      />
+    );
+  };
+
   return (
     <div className="fixed top-4 right-4 z-50">
       <Button
@@ -68,32 +91,40 @@ const AIChatWindow = () => {
       </Button>
 
       {isOpen && (
-        <div className="absolute top-12 right-0 w-96 h-[500px] bg-gray-900 rounded-lg shadow-xl border border-gray-800 flex flex-col overflow-hidden">
+        <div ref={chatWindowRef} className="absolute top-12 right-0 w-96 h-[500px] bg-gray-900 rounded-lg shadow-xl border border-gray-800 flex flex-col overflow-hidden">
           <div className="flex items-center gap-2 p-4 border-b border-gray-800 bg-gray-800">
             <Bot className="w-6 h-6 text-blue-500" />
             <div className="flex flex-col">
-              <h3 className="text-sm font-medium text-white">MIPS Bot (Claude)</h3>
+              <h3 className="text-sm font-medium text-white">MIPS Bot</h3>
               <span className="text-xs text-green-500">Online</span>
             </div>
             <Button 
               variant="ghost" 
               size="sm" 
               className="ml-auto text-gray-400 hover:text-white"
+              onClick={toggleFullScreen}
+            >
+              {document.fullscreenElement ? 'Exit Fullscreen' : 'Fullscreen'}
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="ml-2 text-gray-400 hover:text-white"
               onClick={() => setIsOpen(false)}
             >
               ×
             </Button>
           </div>
           
-          <div className="flex-1 overflow-auto p-4 space-y-4">
+          <div className="flex-1 overflow-auto p-4 space-y-2">
             {messages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === 'ai' ? 'justify-start' : 'justify-end'}`}>
-                <div className={`rounded-lg p-3 max-w-[80%] ${
+                <div className={`rounded-lg p-2 max-w-[80%] ${
                   msg.role === 'ai' 
-                    ? 'bg-gray-800 text-white' 
-                    : 'bg-blue-600 text-white'
+                    ? 'bg-gray-800 text-white whitespace-pre-wrap text-sm' 
+                    : 'bg-blue-600 text-white text-sm'
                 }`}>
-                  {msg.content}
+                  {msg.role === 'ai' ? renderMessage(msg.content) : msg.content}
                 </div>
               </div>
             ))}
@@ -115,7 +146,7 @@ const AIChatWindow = () => {
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyPress={handleKeyPress}
+                onKeyDown={handleKeyPress}
                 className="flex-1 bg-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                 placeholder="Ask anything about MIPS..."
                 rows={1}

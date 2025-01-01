@@ -27,6 +27,11 @@ export function parseLabelsAndInstructions(
 
   // First pass: collect all labels
   for (const line of instructions) {
+    // Skip .globl directives
+    if (line.trim().startsWith('.globl')) {
+      continue;
+    }
+
     if (line.startsWith('.data')) {
       dataMode = true;
       continue;
@@ -57,6 +62,11 @@ export function parseLabelsAndInstructions(
 
   // Second pass: process instructions and data
   for (const line of instructions) {
+    // Skip .globl directives
+    if (line.trim().startsWith('.globl')) {
+      continue;
+    }
+
     if (line.startsWith('.data')) {
       dataMode = true;
       continue;
@@ -117,4 +127,4 @@ export function parseLabelsAndInstructions(
   }
 
   return [parsedInstructions, labels, memory];
-} 
+}

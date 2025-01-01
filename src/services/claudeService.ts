@@ -9,23 +9,23 @@ async function getAnthropicKey() {
       .from('secrets')
       .select('value')
       .eq('name', 'ANTHROPIC_API_KEY')
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('Error fetching API key:', error);
       throw error;
     }
     
-    if (!data?.value) {
+    if (!data) {
       console.error('API key not found in secrets');
-      throw new Error('API key not found');
+      throw new Error('API key not found in Supabase secrets. Please add it using the form above.');
     }
 
     console.log('Successfully retrieved API key');
     return data.value;
   } catch (error) {
     console.error('Error in getAnthropicKey:', error);
-    throw new Error('Could not retrieve API key');
+    throw new Error('Could not retrieve API key. Please ensure it is properly set in Supabase secrets.');
   }
 }
 

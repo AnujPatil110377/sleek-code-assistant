@@ -7,8 +7,7 @@ export function readAsmFile(content: string): string[] {
   for (const line of lines) {
     // Remove comments and trim whitespace
     const cleanLine = line.replace(/#.*/, '').trim();
-    // Skip empty lines, .globl directives, and other assembler directives we don't handle
-    if (cleanLine && !cleanLine.startsWith('.globl') && !cleanLine.startsWith('.text') && !cleanLine.startsWith('.data')) {
+    if (cleanLine) {
       instructions.push(cleanLine);
     }
   }
@@ -118,4 +117,4 @@ export function parseLabelsAndInstructions(
   }
 
   return [parsedInstructions, labels, memory];
-}
+} 
